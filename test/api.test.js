@@ -155,6 +155,10 @@ if (!url) {
     });
   });
   afterAll(async () => {
+    await sql`delete from servers where nichedb_id between 90000 and 90999`;
+    await sql`delete from providers where slug in ('testhost', 'other.example')`;
+    await sql`delete from deals where nichedb_id between 90000 and 90999`;
+    await sql`delete from users where email like '%@test.r4ck'`;
     await close();
   });
 
