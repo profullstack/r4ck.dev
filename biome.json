@@ -9,7 +9,11 @@
     "enabled": true,
     "rules": {
       "recommended": true,
-      "suspicious": { "noExplicitAny": "off", "noAssignInExpressions": "off", "useIterableCallbackReturn": "off" },
+      "suspicious": {
+        "noExplicitAny": "off",
+        "noAssignInExpressions": "off",
+        "useIterableCallbackReturn": "off"
+      },
       "style": { "noDescendingSpecificity": "off" },
       "a11y": { "useValidAnchor": "off", "useSemanticElements": "off" }
     }

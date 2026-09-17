@@ -169,9 +169,11 @@ if (!url) {
       expect(Number(p.server_count)).toBe(2);
       const o = await cat.getProvider('other.example');
       expect(o.data.inferred).toBe(true);
-      const [{ n }] = await sql`select count(*)::int as n from servers where nichedb_id between 90000 and 90999`;
+      const [{ n }] =
+        await sql`select count(*)::int as n from servers where nichedb_id between 90000 and 90999`;
       expect(n).toBe(3);
-      const [{ d }] = await sql`select count(*)::int as d from deals where nichedb_id between 90000 and 90999`;
+      const [{ d }] =
+        await sql`select count(*)::int as d from deals where nichedb_id between 90000 and 90999`;
       expect(d).toBe(1);
     });
     test('a second sync with a new price records a point', async () => {

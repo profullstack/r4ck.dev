@@ -1,14 +1,19 @@
+import { existsSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { config } from '@r4ck/config';
 import { DEFAULT_RATES, fetchRates } from '@r4ck/core/fx';
 import { itemToDeal, itemToProvider, itemToServer, providerFromServer } from '@r4ck/core/normalize';
 import * as cat from '@r4ck/db/catalog';
-import { existsSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { nichedbClient } from './nichedb.js';
 
 /** A snapshot of the collection ships in the repo so a fresh deployment has data at boot. */
-export const SNAPSHOT = join(dirname(fileURLToPath(import.meta.url)), '..', 'data', 'hosting-snapshot.json.gz');
+export const SNAPSHOT = join(
+  dirname(fileURLToPath(import.meta.url)),
+  '..',
+  'data',
+  'hosting-snapshot.json.gz',
+);
 
 export async function snapshotItems(path = SNAPSHOT) {
   const raw = await Bun.file(path).arrayBuffer();
@@ -141,6 +146,13 @@ export function startSyncLoop({ log = console.log } = {}) {
   };
   const every = Math.max(5, config.nichedb.syncMinutes) * 60_000;
   const timer = setInterval(() => tick(false), every);
-  if (config.nichedb.syncOnBoot) setTimeout(() => seedIfEmpty({ log }).catch((err) => log(`[sync] seed failed: ${err?.message ?? err}`)).then(() => tick(false)), 2_000);
+  if (config.nichedb.syncOnBoot)
+    setTimeout(
+      () =>
+        seedIfEmpty({ log })
+          .catch((err) => log(`[sync] seed failed: ${err?.message ?? err}`))
+          .then(() => tick(false)),
+      2_000,
+    );
   return { stop: () => clearInterval(timer), tick };
 }
