@@ -47,5 +47,23 @@ export function nichedbClient({
       before = Math.min(...rows.map((i) => Number(i.id)));
     }
   }
-  return { get, items, base };
+  /** The most recently updated rows in the collection, newest first, one page. */
+  async function recent({ collection = config.nichedb.collection, limit = 200 } = {}) {
+    const p = new URLSearchParams({
+      collection,
+      limit: String(limit),
+      sort: 'updated',
+      order: 'desc',
+    });
+    const body = await get(`/api/v1/items?${p}`);
+    return body.items ?? [];
+  }
+  /** One keyset page by id, for a resumable full walk. */
+  async function page({ collection = config.nichedb.collection, before = null, limit = 200 } = {}) {
+    const p = new URLSearchParams({ collection, limit: String(limit), sort: 'id', order: 'desc' });
+    if (before) p.set('before', String(before));
+    const body = await get(`/api/v1/items?${p}`);
+    return body.items ?? [];
+  }
+  return { get, items, recent, page, base };
 }

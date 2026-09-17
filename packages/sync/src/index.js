@@ -57,43 +57,22 @@ export async function refreshRates({ log = console.log } = {}) {
   }
 }
 
-export async function syncOnce({
-  full = false,
-  log = console.log,
-  client = nichedbClient(),
-  items = null,
-} = {}) {
-  const started = Date.now();
-  const state = (await cat.getSyncState('nichedb')) ?? {};
-  const since =
-    full || !state.watermark
-      ? null
-      : new Date(new Date(state.watermark).getTime() - 10 * 60_000).toISOString();
-  const rates = await currentRates();
-  const counts = {
-    providers: 0,
-    servers: 0,
-    deals: 0,
-    skipped: 0,
-    created: 0,
-    priceChanges: 0,
-    pages: 0,
-  };
-  let watermark = state.watermark ?? null;
+/**
+ * Apply a batch of NicheDB items: providers first so a plan's provider slug
+ * can resolve to the register's slug, then plans and deals. Returns counts
+ * and the newest updated_at seen.
+ */
+export async function applyItems(
+  items,
+  { rates, log = () => {}, counts = freshCounts(), watermark = null } = {},
+) {
   const pending = [];
-  const source = items ?? client.items({ since });
-  // Providers first so a plan's provider slug can resolve to the register's slug.
-  for await (const page of source) {
-    counts.pages++;
-    for (const item of page) {
-      if (item.updated_at && (!watermark || item.updated_at > watermark))
-        watermark = item.updated_at;
-      if (item.kind === 'provider') {
-        await cat.upsertProvider(itemToProvider(item));
-        counts.providers++;
-      } else pending.push(item);
-    }
-    log(`[sync] page ${counts.pages}: ${page.length} items (${pending.length} pending)`);
+  for (const item of items) {
+    if (item.updated_at && (!watermark || item.updated_at > watermark)) watermark = item.updated_at;
+    if (item.kind === 'provider') {
+      await cat.upsertProvider(itemToProvider(item));
+      counts.providers++;
+    } else pending.push(item);
   }
   for (const item of pending) {
     if (item.kind === 'plan') {
@@ -116,14 +95,134 @@ export async function syncOnce({
       counts.deals++;
     } else counts.skipped++;
   }
+  void log;
+  return { counts, watermark };
+}
+
+const freshCounts = () => ({
+  providers: 0,
+  servers: 0,
+  deals: 0,
+  skipped: 0,
+  created: 0,
+  priceChanges: 0,
+  pages: 0,
+});
+
+/**
+ * Mirror the collection from an explicit page iterable (a snapshot, a file,
+ * or the client's full walk). Used by the CLI and the tests.
+ */
+export async function syncOnce({
+  full = false,
+  log = console.log,
+  client = nichedbClient(),
+  items = null,
+} = {}) {
+  const started = Date.now();
+  const state = (await cat.getSyncState('nichedb')) ?? {};
+  const rates = await currentRates();
+  let counts = freshCounts();
+  let watermark = state.watermark ?? null;
+  const source = items ?? client.items();
+  for await (const page of source) {
+    counts.pages++;
+    ({ counts, watermark } = await applyItems(page, { rates, counts, watermark }));
+    log(`[sync] page ${counts.pages}: ${page.length} items`);
+  }
   await cat.setSyncState('nichedb', {
+    ...state,
     watermark,
     at: new Date().toISOString(),
     counts,
     ms: Date.now() - started,
-    full: since === null,
+    full: Boolean(full || !items),
   });
   log(`[sync] done in ${Math.round((Date.now() - started) / 1000)}s: ${JSON.stringify(counts)}`);
+  return counts;
+}
+
+/**
+ * The periodic pass, shaped around what nichedb.dev actually answers.
+ *
+ * Its items API takes 30 to 90 seconds a page and a `since=` filter never
+ * returns, so "what changed" is read as the newest rows by updated_at: one
+ * page of 200 catches a day's worth of a source's re-runs. A full keyset walk
+ * by id, resumed from a saved cursor with a time budget per tick, catches
+ * anything the recent page missed and completes across several ticks.
+ */
+export async function syncTick({
+  log = console.log,
+  client = nichedbClient(),
+  budgetMs = 8 * 60_000,
+  walkEveryMs = 24 * 3600_000,
+  now = Date.now,
+} = {}) {
+  const started = now();
+  const state = (await cat.getSyncState('nichedb')) ?? {};
+  const rates = await currentRates();
+  let counts = freshCounts();
+  let watermark = state.watermark ?? null;
+  const save = (extra = {}) =>
+    cat.setSyncState('nichedb', {
+      ...state,
+      ...extra,
+      watermark,
+      at: new Date().toISOString(),
+      counts,
+    });
+
+  try {
+    const recent = await client.recent();
+    counts.pages++;
+    ({ counts, watermark } = await applyItems(recent, { rates, counts, watermark }));
+    log(
+      `[sync] recent: ${recent.length} rows, ${counts.created} new, ${counts.priceChanges} price changes`,
+    );
+  } catch (err) {
+    log(`[sync] recent page failed: ${err?.message ?? err}`);
+  }
+  await save();
+
+  const walk = state.walk ?? null;
+  const lastWalk = state.walkCompletedAt ? new Date(state.walkCompletedAt).getTime() : 0;
+  if (!walk && now() - lastWalk < walkEveryMs) return counts;
+  let before = walk?.before ?? null;
+  let seen = walk?.seen ?? 0;
+  let exhausted = false;
+  while (now() - started < budgetMs) {
+    let page;
+    try {
+      page = await client.page({ before });
+    } catch (err) {
+      log(`[sync] walk page failed at before=${before}: ${err?.message ?? err}`);
+      await save({
+        walk: { before, seen, startedAt: walk?.startedAt ?? new Date().toISOString() },
+      });
+      return counts;
+    }
+    counts.pages++;
+    if (page.length === 0) {
+      exhausted = true;
+      break;
+    }
+    ({ counts, watermark } = await applyItems(page, { rates, counts, watermark }));
+    seen += page.length;
+    before = Math.min(...page.map((i) => Number(i.id)));
+    log(`[sync] walk: ${seen} rows so far (before ${before})`);
+    if (page.length < 200) {
+      exhausted = true;
+      break;
+    }
+    await save({ walk: { before, seen, startedAt: walk?.startedAt ?? new Date().toISOString() } });
+  }
+  if (exhausted) {
+    await save({ walk: null, walkCompletedAt: new Date().toISOString(), walkRows: seen });
+    log(`[sync] walk complete: ${seen} rows`);
+  } else {
+    await save({ walk: { before, seen, startedAt: walk?.startedAt ?? new Date().toISOString() } });
+    log(`[sync] walk paused at ${seen} rows, resumes next tick`);
+  }
   return counts;
 }
 
@@ -137,7 +236,13 @@ export function startSyncLoop({ log = console.log } = {}) {
       const fx = await cat.getSyncState('fx');
       if (!fx?.at || Date.now() - new Date(fx.at).getTime() > 86_400_000)
         await refreshRates({ log });
-      await syncOnce({ full, log });
+      if (full) await syncOnce({ full, log });
+      else
+        await syncTick({
+          log,
+          budgetMs: config.nichedb.budgetMs,
+          walkEveryMs: config.nichedb.walkHours * 3600_000,
+        });
     } catch (err) {
       log(`[sync] failed: ${err?.message ?? err}`);
     } finally {

@@ -35,7 +35,7 @@ bun run dev                     # http://localhost:3000
 bun test                        # needs DATABASE_URL; the api test seeds and cleans its own rows
 ```
 
-`bun run sync --file snapshot.json` seeds from a saved `/api/v1/items` dump. The worker resyncs every `SYNC_MINUTES` with `since=` and refreshes ECB rates daily.
+`bun run sync --file snapshot.json` seeds from a saved `/api/v1/items` dump. The worker then keeps up with nichedb.dev on its own: every `SYNC_MINUTES` (15) it reads the 200 most recently updated rows in the collection, and once every `SYNC_WALK_HOURS` (24) it walks the whole collection by id, `SYNC_BUDGET_MS` (8 minutes) at a time, resuming from a saved cursor until it is done. nichedb's items API takes 30 to 90 seconds a page and its `since=` filter does not return, which is why the sync is shaped this way. ECB rates refresh daily.
 
 ## Layout
 
