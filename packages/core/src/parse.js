@@ -140,11 +140,24 @@ export function parseQuery(text) {
   );
   take(
     new RegExp(
-      String.raw`\s(?:at least|min(?:imum)?|>=?)?\s?${size}\s?(?:of\s)?(?:nvme|ssd|hdd|disk|storage|space|drive)\s?(?:\+|or more)?\s`,
+      String.raw`\s(?:at least|min(?:imum)?|>=?)?\s?${size}\s?(?:of\s)?(nvme|ssd|hdd|disk|storage|space|drive)\s?(?:\+|or more)?\s`,
       'g',
     ),
-    (_, n, u) => {
-      f.min_disk = gb(n, u);
+    (_, n, u, word) => {
+      // "32gb nvme" in a spec sentence is 32 GB of RAM on an NVMe box, not a 32 GB
+      // disk: a size under 100 GB before a disk TYPE word is memory when no memory
+      // was named. "100gb nvme" and "40gb disk" are disks.
+      const v = gb(n, u);
+      if (
+        ['nvme', 'ssd'].includes(word) &&
+        v < 100 &&
+        f.min_ram === undefined &&
+        !u.startsWith('t')
+      ) {
+        f.min_ram = v;
+        return;
+      }
+      f.min_disk = v;
     },
   );
   take(

@@ -91,6 +91,14 @@ describe('itemToServer', () => {
     expect(s.ram_mb).toBeNull();
     expect(s.disk_gb).toBeNull();
   });
+  test('impossible specs are dropped, not believed', () => {
+    const s = itemToServer({
+      ...plan,
+      data: { ...plan.data, offer: { ...plan.data.offer, compute: { vcpu: 6142, ram_mb: 2048 } } },
+    });
+    expect(s.vcpu).toBeNull();
+    expect(s.ram_mb).toBe(2048);
+  });
   test('gpu offers', () => {
     const s = itemToServer({
       ...plan,

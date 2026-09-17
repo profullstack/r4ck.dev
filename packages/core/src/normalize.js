@@ -13,6 +13,8 @@ const num = (v) => {
   return Number.isFinite(n) ? n : null;
 };
 const int = (v) => (num(v) === null ? null : Math.round(num(v)));
+/** A spec outside what any offer sells is a parse error upstream, not a fact. */
+const bounded = (v, max) => (v === null || v < 0 || v > max ? null : v);
 const str = (v) => (v === undefined || v === null || v === '' ? null : String(v));
 const domainOf = (url) => {
   try {
@@ -62,14 +64,14 @@ export function itemToServer(item, rates = DEFAULT_RATES) {
     tenancy: str(o.tenancy),
     management: str(o.management),
     model: str(o.model),
-    vcpu: int(compute.vcpu),
-    cores: int(compute.cores),
-    ram_mb: int(compute.ram_mb),
+    vcpu: bounded(int(compute.vcpu), 1024),
+    cores: bounded(int(compute.cores), 1024),
+    ram_mb: bounded(int(compute.ram_mb), 32 * 1024 * 1024),
     arch: str(compute.arch)?.toLowerCase() ?? null,
     gpu_model: gpu ? str(gpu.model) : null,
-    gpu_count: gpu ? (int(gpu.count) ?? 1) : null,
-    gpu_vram_mb: gpu ? int(gpu.vram_mb) : null,
-    disk_gb: diskGb > 0 ? round(diskGb, 2) : null,
+    gpu_count: gpu ? bounded(int(gpu.count) ?? 1, 64) : null,
+    gpu_vram_mb: gpu ? bounded(int(gpu.vram_mb), 4 * 1024 * 1024) : null,
+    disk_gb: diskGb > 0 ? bounded(round(diskGb, 2), 10_000_000) : null,
     disk_type: str(storage[0]?.type)?.toLowerCase() ?? null,
     bandwidth_mbps: int(net.bandwidth_mbps),
     transfer_gb: num(net.transfer_gb),
