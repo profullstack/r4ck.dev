@@ -9,7 +9,7 @@ if (!url) {
   test.skip('needs DATABASE_URL', () => {});
 } else {
   const { migrate } = await import('@r4ck/db/migrate');
-  const { sql, close } = await import('@r4ck/db');
+  const { sql } = await import('@r4ck/db');
   const cat = await import('@r4ck/db/catalog');
   const { syncOnce } = await import('@r4ck/sync');
   const { app } = await import('../apps/web/src/app.js');
@@ -159,7 +159,6 @@ if (!url) {
     await sql`delete from providers where slug in ('testhost', 'other.example')`;
     await sql`delete from deals where nichedb_id between 90000 and 90999`;
     await sql`delete from users where email like '%@test.r4ck'`;
-    await close();
   });
 
   describe('sync', () => {

@@ -106,7 +106,6 @@ if (!url) {
       await sql`delete from servers where nichedb_id between 91000 and 91999`;
       await sql`delete from providers where slug = 'synctest'`;
       await sql`delete from sync_state where key = 'nichedb'`;
-      await sql.end();
     });
   });
 }
