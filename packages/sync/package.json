@@ -1,0 +1,16 @@
+{
+  "name": "@r4ck/sync",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./nichedb": "./src/nichedb.js"
+  },
+  "dependencies": {
+    "@r4ck/config": "workspace:*",
+    "@r4ck/core": "workspace:*",
+    "@r4ck/db": "workspace:*"
+  }
+}

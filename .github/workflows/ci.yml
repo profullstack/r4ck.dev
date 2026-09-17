@@ -1,0 +1,26 @@
+name: ci
+on:
+  push: { branches: [main] }
+  pull_request:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env: { POSTGRES_USER: r4ck, POSTGRES_PASSWORD: r4ck, POSTGRES_DB: r4ck }
+        ports: ['5442:5432']
+        options: >-
+          --health-cmd "pg_isready -U r4ck" --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with: { bun-version: 1.4.0 }
+      - run: bun install --ignore-scripts
+      - run: bun run lint
+      - run: bun apps/web/build-client.js
+      - run: bun test
+        env:
+          DATABASE_URL: postgres://r4ck:r4ck@localhost:5442/r4ck
+          SITE_URL: http://localhost:3000
+          NODE_ENV: test

@@ -1,0 +1,57 @@
+{
+  "name": "@r4ck/desktop",
+  "version": "0.1.0",
+  "private": true,
+  "description": "r4ck for the desktop: the PWA in its own window with the r4ck CLI bundled, so an agent on the machine has the same tools as the person.",
+  "main": "main.cjs",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --publish never"
+  },
+  "devDependencies": {
+    "electron": "^38.0.0",
+    "electron-builder": "^26.0.0"
+  },
+  "dependencies": {
+    "@profullstack/r4ck": "workspace:*"
+  },
+  "build": {
+    "appId": "dev.r4ck.desktop",
+    "productName": "r4ck",
+    "directories": {
+      "output": "out"
+    },
+    "files": [
+      "main.cjs",
+      "preload.cjs",
+      "icon.png",
+      "node_modules/@profullstack/r4ck/**"
+    ],
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "category": "Utility"
+    },
+    "mac": {
+      "target": [
+        "dmg"
+      ],
+      "category": "public.app-category.developer-tools"
+    },
+    "win": {
+      "target": [
+        "nsis"
+      ]
+    },
+    "protocols": [
+      {
+        "name": "r4ck",
+        "schemes": [
+          "r4ck"
+        ]
+      }
+    ]
+  }
+}

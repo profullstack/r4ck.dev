@@ -1,0 +1,15 @@
+services:
+  app:
+    build: .
+    ports: ['3000:3000']
+    env_file: [.env]
+    environment:
+      DATABASE_URL: postgres://r4ck:r4ck@postgres:5432/r4ck
+      ROLES: web,worker
+    depends_on: [postgres]
+  postgres:
+    image: postgres:17-alpine
+    environment: { POSTGRES_USER: r4ck, POSTGRES_PASSWORD: r4ck, POSTGRES_DB: r4ck }
+    volumes: ['pgdata:/var/lib/postgresql/data']
+volumes:
+  pgdata: {}

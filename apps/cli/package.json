@@ -1,0 +1,40 @@
+{
+  "name": "@profullstack/r4ck",
+  "version": "0.1.0",
+  "description": "r4ck.dev from the terminal and for agents: search every VPS, bare metal, GPU and PaaS offer for sale, drill down by spec, price and place, and bridge the same tools into any MCP client.",
+  "type": "module",
+  "main": "src/index.js",
+  "bin": {
+    "r4ck": "./bin/r4ck.js"
+  },
+  "files": [
+    "bin",
+    "src",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "license": "MIT",
+  "homepage": "https://r4ck.dev",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/profullstack/r4ck.dev.git",
+    "directory": "apps/cli"
+  },
+  "keywords": [
+    "vps",
+    "hosting",
+    "servers",
+    "bare-metal",
+    "gpu",
+    "mcp",
+    "cli",
+    "agents",
+    "x402"
+  ],
+  "mcpName": "dev.r4ck/r4ck",
+  "scripts": {
+    "test": "bun test"
+  }
+}
