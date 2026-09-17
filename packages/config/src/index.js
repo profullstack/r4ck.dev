@@ -44,7 +44,7 @@ export const config = Object.freeze({
     collection: 'hosting',
     syncMinutes: num(env.SYNC_MINUTES, 30),
     syncOnBoot: bool(env.SYNC_ON_BOOT, true),
-    timeoutMs: num(env.NICHEDB_TIMEOUT_MS, 170_000),
+    timeoutMs: num(env.NICHEDB_TIMEOUT_MS, 300_000),
   },
   mail: {
     enabled: Boolean(env.RESEND_API_KEY),

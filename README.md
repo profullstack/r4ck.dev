@@ -29,7 +29,8 @@ Access: read free (300 API requests an hour, 50 rows a page); a free key (magic 
 cp .env.example .env            # DATABASE_URL, SITE_URL at least
 bun install
 bun run migrate
-bun run sync --full             # first mirror from nichedb.dev (a few minutes; it is slow upstream)
+bun run sync --snapshot         # seed from the shipped snapshot (packages/sync/data), instant
+bun run sync --full             # or walk nichedb.dev itself (minutes; it is slow upstream)
 bun run dev                     # http://localhost:3000
 bun test                        # needs DATABASE_URL; the api test seeds and cleans its own rows
 ```

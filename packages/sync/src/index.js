@@ -2,7 +2,33 @@ import { config } from '@r4ck/config';
 import { DEFAULT_RATES, fetchRates } from '@r4ck/core/fx';
 import { itemToDeal, itemToProvider, itemToServer, providerFromServer } from '@r4ck/core/normalize';
 import * as cat from '@r4ck/db/catalog';
+import { existsSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { nichedbClient } from './nichedb.js';
+
+/** A snapshot of the collection ships in the repo so a fresh deployment has data at boot. */
+export const SNAPSHOT = join(dirname(fileURLToPath(import.meta.url)), '..', 'data', 'hosting-snapshot.json.gz');
+
+export async function snapshotItems(path = SNAPSHOT) {
+  const raw = await Bun.file(path).arrayBuffer();
+  const rows = JSON.parse(new TextDecoder().decode(Bun.gunzipSync(new Uint8Array(raw))));
+  return (async function* () {
+    for (let i = 0; i < rows.length; i += 200) yield rows.slice(i, i + 200);
+  })();
+}
+
+/**
+ * First boot on an empty database: load the shipped snapshot so pages have
+ * rows immediately. The live sync then walks forward from its watermark.
+ */
+export async function seedIfEmpty({ log = console.log } = {}) {
+  const s = await cat.stats();
+  if (Number(s.servers) > 0 || !existsSync(SNAPSHOT)) return false;
+  log('[sync] empty catalogue: seeding from the shipped snapshot');
+  await syncOnce({ log, items: await snapshotItems() });
+  return true;
+}
 
 /**
  * Mirror the hosting collection. The first run walks everything; later runs
@@ -115,6 +141,6 @@ export function startSyncLoop({ log = console.log } = {}) {
   };
   const every = Math.max(5, config.nichedb.syncMinutes) * 60_000;
   const timer = setInterval(() => tick(false), every);
-  if (config.nichedb.syncOnBoot) setTimeout(() => tick(false), 2_000);
+  if (config.nichedb.syncOnBoot) setTimeout(() => seedIfEmpty({ log }).catch((err) => log(`[sync] seed failed: ${err?.message ?? err}`)).then(() => tick(false)), 2_000);
   return { stop: () => clearInterval(timer), tick };
 }
