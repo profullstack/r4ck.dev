@@ -1,11 +1,10 @@
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { join } from 'node:path';
 import { config } from '@r4ck/config';
 import { sql } from '@r4ck/db';
+import { assetVersion, PUBLIC } from '../lib/assets.js';
 import { gateway } from '../lib/gate.js';
 import { llmsTxt, skillMd } from '../lib/llms.js';
 
-const PUBLIC = join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'public');
 const TYPES = {
   css: 'text/css; charset=utf-8',
   js: 'text/javascript; charset=utf-8',
@@ -29,26 +28,11 @@ const FILES = [
   'fonts/GeistMono.woff2',
 ];
 
-/** Content-hash version for cache busting: computed once per process. */
-const versions = new Map();
-export async function assetVersion(name) {
-  if (versions.has(name)) return versions.get(name);
-  try {
-    const buf = await Bun.file(join(PUBLIC, name)).arrayBuffer();
-    const hash = new Bun.CryptoHasher('sha1').update(buf).digest('hex').slice(0, 10);
-    versions.set(name, hash);
-    return hash;
-  } catch {
-    return 'dev';
-  }
-}
-export const assetUrl = async (name) => `/${name}?v=${await assetVersion(name)}`;
-
 async function serve(c, name, { cache = 'public, max-age=3600' } = {}) {
   const file = Bun.file(join(PUBLIC, name));
   if (!(await file.exists())) return c.notFound();
   const ext = name.split('.').pop();
-  const immutable = c.req.query('v') && c.req.query('v') === (await assetVersion(name));
+  const immutable = c.req.query('v') && c.req.query('v') === assetVersion(name);
   return new Response(file, {
     headers: {
       'content-type': TYPES[ext] ?? 'application/octet-stream',

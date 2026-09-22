@@ -1,13 +1,16 @@
 import { config } from '@r4ck/config';
 import { raw } from 'hono/html';
-import { assetUrl } from '../routes/static.js';
+import { assetUrl } from '../lib/assets.js';
 
 /**
  * The one HTML shell. Dark ground by default, a light theme on request,
  * a sticky top bar on wide screens and a bottom bar on phones, and the
  * command palette that turns any page into the search box.
+ *
+ * Synchronous: a page whose children are plain markup renders to a string
+ * with no await, which is what the x402 gateway's sales page hook needs.
  */
-export async function Layout({
+export function Layout({
   title,
   description,
   user,
@@ -25,9 +28,9 @@ export async function Layout({
   const desc =
     description ??
     'Every VPS, cloud, bare metal, GPU and PaaS offer for sale, searchable by spec, price and place. Same query on the page, the API, the CLI and MCP.';
-  const css = await assetUrl('styles.css');
-  const js = await assetUrl('app.js');
-  const vendor = await assetUrl('vendor-webauthn.js');
+  const css = assetUrl('styles.css');
+  const js = assetUrl('app.js');
+  const vendor = assetUrl('vendor-webauthn.js');
   const url = `${config.siteUrl}${canonical ?? path}`;
   const nav = [
     ['/servers', 'Servers', 'search'],

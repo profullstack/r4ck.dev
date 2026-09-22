@@ -2,6 +2,7 @@ import { createThrottle, memoryStore } from '@profullstack/throttle';
 import { createGateway } from '@profullstack/x402-gateway';
 import { config } from '@r4ck/config';
 import * as accounts from '@r4ck/db/accounts';
+import { renderCrawl } from '../views/crawl.jsx';
 import { Denied } from './http.js';
 
 /**
@@ -39,6 +40,8 @@ export const gateway = createGateway({
   contact: config.x402.contact,
   openPaths: OPEN_PATHS,
   chargeSpoofedBrowsers: false,
+  // /crawl in the site's own shell instead of the gateway's bare page.
+  page: renderCrawl,
   benefits: [
     'No hourly allowance on the API, the CLI or MCP',
     'Bulk CSV and JSON export of any query',
