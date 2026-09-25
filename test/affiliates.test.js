@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'bun:test';
+import { readFileSync } from 'node:fs';
 import {
   AFFILIATE_REL,
   AFFILIATES,
@@ -7,6 +8,7 @@ import {
   isFrontDoor,
   outbound,
   PLAIN_REL,
+  parseAffiliates,
 } from '@r4ck/core';
 
 const DEDIROCK = 'https://billing.dedirock.com/aff.php?aff=960';
@@ -137,5 +139,51 @@ describe('hostOf', () => {
 
   test('is null for something that is not a URL', () => {
     expect(hostOf('nope')).toBeNull();
+  });
+});
+
+const OPALSTACK = 'https://my.opalstack.com/signup/?via=68ba4d';
+
+describe('affiliates.txt', () => {
+  const file = new URL('../affiliates.txt', import.meta.url);
+  const entries = () =>
+    readFileSync(file, 'utf8')
+      .split('\n')
+      .map((l) => l.replace(/#.*$/, '').trim())
+      .filter(Boolean);
+
+  test('reads without errors', () => {
+    expect(parseAffiliates(readFileSync(file, 'utf8')).errors).toEqual([]);
+  });
+
+  test('is sorted by domain with no duplicates, so `bun run affiliates` has nothing to do', () => {
+    const domains = entries().map((l) => l.split(/\s+/)[0]);
+    expect(domains).toEqual([...new Set(domains)].sort());
+  });
+
+  test('rejects a line it cannot read, a second listing, and plain http', () => {
+    const { errors } = parseAffiliates(
+      'a.com https://a.com/?r=1\na.com https://a.com/?r=2\nb.com\nc.com http://c.com/\nd.com https://d.com/ sometimes',
+    );
+    expect(errors).toHaveLength(4);
+  });
+});
+
+describe('Opalstack (Rewardful, forwards anywhere)', () => {
+  test('is in the table and is not landing-only', () => {
+    expect(AFFILIATES['opalstack.com']).toEqual({ url: OPALSTACK, landingOnly: false });
+  });
+
+  test('every Opalstack link, front door or deep, goes through the referral link', () => {
+    for (const url of [
+      'https://opalstack.com/',
+      'https://www.opalstack.com/pricing',
+      'https://my.opalstack.com/signup/',
+    ]) {
+      const out = outbound(url, 'opalstack.com');
+      expect(out.href).toBe(OPALSTACK);
+      expect(out.affiliate).toBe(true);
+      expect(out.rel).toBe(AFFILIATE_REL);
+    }
   });
 });
