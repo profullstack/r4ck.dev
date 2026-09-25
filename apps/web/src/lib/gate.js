@@ -77,6 +77,14 @@ export const throttle = createThrottle({
 
 /** The gate as one Hono middleware: crawlers, then the site-wide allowance. */
 export async function gate(c, next) {
+  // GoogleOther (Google's non-Search crawler) walked every filter combination
+  // of /servers and /api/v1/search at ~120/min, past its allowance and into
+  // the 402 page. robots.txt refuses it, but Google caches robots.txt for up to
+  // a day, so answer it here too: a few bytes, no data. robots.txt stays open,
+  // or it could never learn it was refused. Googlebot itself is untouched.
+  if (/GoogleOther/i.test(c.req.header('user-agent') ?? '') && c.req.path !== '/robots.txt') {
+    return c.text('GoogleOther is refused here; see /robots.txt\n', 403);
+  }
   const answer = await gateway.handle(c.req.raw);
   if (answer) return answer;
   const over = await throttle.handle(c.req.raw);
