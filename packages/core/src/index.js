@@ -1,3 +1,4 @@
+export * from './affiliates.js';
 export * from './countries.js';
 export * from './facets.js';
 export * from './fx.js';

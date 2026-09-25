@@ -9,6 +9,7 @@ import {
   FacetRail,
   flag,
   KindBadge,
+  Outbound,
   Pager,
   Price,
   Sparkline,
@@ -227,16 +228,9 @@ export function Server({ user, detail }) {
           {s.price.hourly_usd ? (
             <span class="muted small">≈ {fmtMoney(s.price.hourly_usd)}/hour</span>
           ) : null}
-          {s.url ? (
-            <a
-              class="button primary"
-              href={s.url}
-              rel="noopener nofollow sponsored"
-              target="_blank"
-            >
-              Order at {s.provider.domain ?? s.provider.name} ↗
-            </a>
-          ) : null}
+          <Outbound class="button primary" url={s.url} domain={s.provider.domain}>
+            Order at {s.provider.domain ?? s.provider.name} ↗
+          </Outbound>
           <label class="compare-toggle">
             <input type="checkbox" data-compare={s.id} />
             <span>Add to compare</span>
@@ -350,9 +344,9 @@ export function Compare({ user, result }) {
       'Order',
       (s) =>
         s.url ? (
-          <a href={s.url} rel="noopener nofollow" target="_blank">
+          <Outbound url={s.url} domain={s.provider.domain}>
             ↗
-          </a>
+          </Outbound>
         ) : (
           '·'
         ),
