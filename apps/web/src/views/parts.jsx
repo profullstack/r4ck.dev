@@ -7,6 +7,7 @@ import {
   fmtGb,
   fmtMoney,
   KIND_LABELS,
+  outbound,
   paramsFrom,
   toggle,
   toggleBucket,
@@ -15,6 +16,36 @@ import {
 import { raw } from 'hono/html';
 
 /** Shared pieces: the rack-unit row, facet rail, chips, agent panel, sparkline. */
+
+/**
+ * A link off the site to a provider.
+ *
+ * Routed through a referral endpoint where we have a deal with that provider,
+ * and labelled as one when it is, because a reader is entitled to know which
+ * links pay us. `rel` carries `sponsored` in that case, which is what search
+ * engines ask for on a paid link.
+ */
+export function Outbound({ url, domain, class: cls, children }) {
+  const out = outbound(url, domain);
+  if (!out.href) return null;
+  return (
+    <a class={cls} href={out.href} rel={out.rel} target="_blank">
+      {children}
+      {out.affiliate ? <AffiliateMark /> : null}
+    </a>
+  );
+}
+
+export function AffiliateMark() {
+  return (
+    <span
+      class="aff-mark"
+      title="Affiliate link: r4ck.dev may earn a commission on an order. It buys no ranking and costs you nothing."
+    >
+      affiliate
+    </span>
+  );
+}
 
 export const flag = (code) =>
   /^[A-Z]{2}$/.test(code)

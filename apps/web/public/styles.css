@@ -157,6 +157,21 @@ pre code {
 .small {
   font-size: 0.82rem;
 }
+/*
+ * The visible half of an affiliate disclosure. It sits inside the link it is
+ * disclosing, on a plain text link and on the primary order button alike, so
+ * it inherits colour and steps down only in size and weight.
+ */
+.aff-mark {
+  margin-left: 0.4em;
+  font-size: 0.7em;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  opacity: 0.7;
+  vertical-align: 0.08em;
+  cursor: help;
+}
 .visually-hidden,
 .skip {
   position: absolute;

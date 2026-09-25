@@ -1,7 +1,7 @@
 import { config } from '@r4ck/config';
 import { countryName, fmtMoney } from '@r4ck/core';
 import { Layout } from './Layout.jsx';
-import { AgentPanel, Automation, flag, initials, ProviderCard, Unit } from './parts.jsx';
+import { AgentPanel, Automation, flag, initials, Outbound, ProviderCard, Unit } from './parts.jsx';
 
 const csv = (v) =>
   String(v ?? '')
@@ -249,11 +249,9 @@ export function Provider({ user, detail }) {
               <Automation list={p.automation} />
             </p>
             <p class="links">
-              {p.url ? (
-                <a href={p.url} rel="noopener nofollow" target="_blank">
-                  {p.domain ?? 'Website'} ↗
-                </a>
-              ) : null}
+              <Outbound url={p.url} domain={p.domain}>
+                {p.domain ?? 'Website'} ↗
+              </Outbound>
               {p.links.api_docs ? <a href={p.links.api_docs}>API docs</a> : null}
               {p.links.cli ? <a href={p.links.cli}>CLI</a> : null}
               {p.links.terraform ? <a href={p.links.terraform}>Terraform</a> : null}
