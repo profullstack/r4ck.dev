@@ -88,6 +88,12 @@ export function registerStatic(app) {
     c.text(
       gateway.robotsTxt({
         disallow: ['/login', '/signup', '/settings', '/auth/', '/api/auth/'],
+        // Google's non-Search crawler walked every filter combination of
+        // /api/v1/search and search.csv: 134 unpaid 402s in an hour on dev2,
+        // 2026-09-25. It indexes nothing for Search, so refusing it costs us
+        // no ranking. Refuse it by name: an IP ban on 66.249.x would take
+        // Googlebot down with it.
+        refused: ['GoogleOther'],
         sitemap: `${config.siteUrl}/sitemap.xml`,
       }),
     ),

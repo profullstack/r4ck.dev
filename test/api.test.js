@@ -303,6 +303,11 @@ if (!url) {
         404,
       );
     });
+    test('robots.txt refuses GoogleOther and still welcomes Googlebot', async () => {
+      const txt = await (await app.request('/robots.txt')).text();
+      expect(txt).toContain('User-agent: GoogleOther\nDisallow: /\n');
+      expect(txt).toContain('User-agent: *\nAllow: /');
+    });
     test('training crawlers get 402, readers do not', async () => {
       expect(
         (
