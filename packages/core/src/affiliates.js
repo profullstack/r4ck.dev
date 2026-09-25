@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+
 /**
  * Referral links.
  *
@@ -5,15 +7,18 @@
  * outbound link to that provider goes through their referral endpoint instead
  * of straight to their site, and says so where a reader can see it.
  *
- * ## Why this table lives in source and not in the database
+ * ## Where the table lives: affiliates.txt at the repository root
  *
- * `providers` is a mirror. `sync` pulls the hosting collection from NicheDB
- * and upserts it with `coalesce(excluded.x, providers.x)` on every column, so
- * a referral URL stored there would arrive as null on each sync and survive
- * only by the grace of that coalesce — one upsert written differently and the
- * deal is silently gone. It would also be invisible: nothing in the repository
- * would record who pays us. A table in source makes the commercial
- * relationship reviewable in a diff, and it means a provider who is not in the
+ * One line per provider, `<domain> <referral url> [landing-only]`, sorted and
+ * de-duplicated (`bun run affiliates` does both). Plain text so a deal can be
+ * added or dropped without touching code, and still reviewable in a diff.
+ *
+ * Not the database: `providers` is a mirror. `sync` pulls the hosting
+ * collection from NicheDB and upserts it with `coalesce(excluded.x,
+ * providers.x)` on every column, so a referral URL stored there would arrive
+ * as null on each sync and survive only by the grace of that coalesce. It
+ * would also be invisible: nothing in the repository would record who pays
+ * us. A file in the repository also means a provider who is not in the
  * catalogue yet is already wired up for the day they appear.
  *
  * ## Landing-only links, which is what Dedirock's is
@@ -30,17 +35,46 @@
  * deep link to a particular offer. Sending somebody who clicked a specific
  * plan to a homepage instead, to earn a commission, would be charging the
  * reader for our revenue — which is the thing that makes a directory worth
- * nothing. An entry without `landingOnly` is free to replace any link.
+ * nothing. An entry without `landing-only` is free to replace any link:
+ * Opalstack's Rewardful link does, so every Opalstack link goes through it.
  */
 
+/** Read `affiliates.txt`: comments and blank lines skipped, one entry per line. */
+export function parseAffiliates(text) {
+  const table = {};
+  const errors = [];
+  String(text)
+    .split('\n')
+    .forEach((raw, i) => {
+      const line = raw.replace(/#.*$/, '').trim();
+      if (!line) return;
+      const [domain, url, flag, ...rest] = line.split(/\s+/);
+      const where = `affiliates.txt:${i + 1}`;
+      if (!url || rest.length || (flag && flag !== 'landing-only')) {
+        errors.push(`${where}: expected "<domain> <url> [landing-only]"`);
+        return;
+      }
+      let parsed;
+      try {
+        parsed = new URL(url);
+      } catch {
+        errors.push(`${where}: ${url} is not a URL`);
+        return;
+      }
+      if (parsed.protocol !== 'https:') errors.push(`${where}: ${url} is not https`);
+      const k = domain.toLowerCase().replace(/^www\./, '');
+      if (table[k]) errors.push(`${where}: ${k} is listed twice`);
+      table[k] = { url, landingOnly: flag === 'landing-only' };
+    });
+  return { table, errors };
+}
+
+const FILE = new URL('../../../affiliates.txt', import.meta.url);
+const loaded = parseAffiliates(readFileSync(FILE, 'utf8'));
+if (loaded.errors.length) throw new Error(`affiliates.txt:\n${loaded.errors.join('\n')}`);
+
 /** domain -> referral endpoint. Keys are registrable domains, lowercase. */
-export const AFFILIATES = {
-  'dedirock.com': {
-    url: 'https://billing.dedirock.com/aff.php?aff=960',
-    landingOnly: true,
-    network: 'whmcs',
-  },
-};
+export const AFFILIATES = loaded.table;
 
 /** The rel for a paid link. `sponsored` is the value search engines ask for. */
 export const AFFILIATE_REL = 'noopener nofollow sponsored';

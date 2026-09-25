@@ -19,6 +19,7 @@
     "sync": "bun packages/sync/src/cli.js",
     "migrate": "bun packages/db/src/migrate-cli.js",
     "build:client": "bun apps/web/build-client.js",
+    "affiliates": "bun scripts/affiliates.js",
     "build:brand": "python3 scripts/generate-brand.py",
     "test": "bun test",
     "lint": "bun run --bun biome check .",

@@ -1,0 +1,16 @@
+# Referral links: one provider per line, sorted by domain, no duplicates.
+#
+#   <domain> <referral url> [landing-only]
+#
+# domain        the provider's registrable domain, lowercase, no www.
+#               Subdomains match too (billing.dedirock.com is dedirock.com).
+# referral url  where every outbound link to that provider goes instead. https only.
+# landing-only  the referral endpoint cannot forward to a page of our choosing
+#               (WHMCS aff.php), so it replaces only links to the provider's
+#               front door and never a deep link to a named plan.
+#
+# `bun run affiliates` sorts and de-dupes this file; the test suite fails if it
+# is out of order, has a duplicate, or has a line it cannot read.
+
+dedirock.com https://billing.dedirock.com/aff.php?aff=960 landing-only
+opalstack.com https://my.opalstack.com/signup/?via=68ba4d
