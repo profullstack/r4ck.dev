@@ -308,6 +308,17 @@ if (!url) {
       expect(txt).toContain('User-agent: GoogleOther\nDisallow: /\n');
       expect(txt).toContain('User-agent: *\nAllow: /');
     });
+    test('GoogleOther gets a bare 403 but can still read robots.txt; Googlebot is served', async () => {
+      const ua = (bot) => ({
+        headers: { 'user-agent': `Mozilla/5.0 (compatible; ${bot})`, 'x-real-ip': '203.0.113.20' },
+      });
+      const refused = await app.request('/api/v1/search?kind=vps', ua('GoogleOther'));
+      expect(refused.status).toBe(403);
+      expect((await refused.text()).length).toBeLessThan(100);
+      expect((await app.request('/servers', ua('GoogleOther'))).status).toBe(403);
+      expect((await app.request('/robots.txt', ua('GoogleOther'))).status).toBe(200);
+      expect((await app.request('/servers', ua('Googlebot/2.1'))).status).toBe(200);
+    });
     test('training crawlers get 402, readers do not', async () => {
       expect(
         (
