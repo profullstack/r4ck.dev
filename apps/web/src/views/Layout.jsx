@@ -82,6 +82,11 @@ export function Layout({
         <meta name="twitter:card" content="summary_large_image" />
         {jsonld ? <script type="application/ld+json">{raw(JSON.stringify(jsonld))}</script> : null}
         {head ?? null}
+        <script
+          data-site="aa98dc15-df01-4c84-a48d-8f5f7ad236f5"
+          src="https://crawlproof.com/stats.js"
+          async
+        ></script>
       </head>
       <body data-path={path}>
         <a class="skip" href="#main">
