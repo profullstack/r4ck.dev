@@ -15,3 +15,4 @@
 dedirock.com https://billing.dedirock.com/aff.php?aff=960 landing-only
 flokinet.is https://billing.flokinet.is/aff.php?aff=651 landing-only
 opalstack.com https://my.opalstack.com/signup/?via=68ba4d
+servitro.com https://my.servitro.com/aff.php?aff=224 landing-only
