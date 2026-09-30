@@ -231,6 +231,7 @@ export async function listProviders({
     order by
       case when ${sort === 'servers'} then (select count(*) from servers s where s.provider = p.slug) end desc nulls last,
       case when ${sort === 'price'} then (select min(monthly_usd) from servers s where s.provider = p.slug and monthly_usd > 0) end asc nulls last,
+      not exists (select 1 from servers s where s.provider = p.slug) asc,
       (p.data->>'inferred') = 'true' asc, p.name asc
     limit ${Math.min(Math.max(1, limit), 500)} offset ${Math.max(0, offset)}
   `;

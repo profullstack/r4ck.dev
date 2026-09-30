@@ -406,7 +406,7 @@ export function ProviderCard({ p }) {
       <div class="provider-card-foot">
         <Automation list={p.automation} />
         <span class="muted small">
-          {p.servers ? `${p.servers} offers` : ''}
+          {p.servers ? `${p.servers} offers` : 'No plans indexed yet'}
           {p.from_usd ? ` · from ${fmtMoney(p.from_usd)}/mo` : ''}
         </span>
       </div>

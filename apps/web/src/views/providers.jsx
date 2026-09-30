@@ -279,36 +279,38 @@ export function Provider({ user, detail }) {
             </p>
           ) : null}
         </section>
-        <section class="panel">
-          <h2>Search within</h2>
-          <form action="/servers" method="get" class="inline-form">
-            <input type="hidden" name="provider" value={p.slug} />
-            <input
-              type="search"
-              name="q"
-              placeholder="4 vcpu 8gb"
-              aria-label="Search this provider"
-              data-omni
-            />
-            <button class="button primary small" type="submit">
-              Search
-            </button>
-          </form>
-          <p class="chips">
-            <a class="chip" href={`/servers?provider=${p.slug}&sort=price`}>
-              Cheapest
-            </a>
-            <a class="chip" href={`/servers?provider=${p.slug}&sort=value`}>
-              Best value
-            </a>
-            <a class="chip" href={`/servers?provider=${p.slug}&gpu=1`}>
-              GPU
-            </a>
-            <a class="chip" href={`/servers?provider=${p.slug}&kind=bare-metal`}>
-              Bare metal
-            </a>
-          </p>
-        </section>
+        {servers.length ? (
+          <section class="panel">
+            <h2>Search within</h2>
+            <form action="/servers" method="get" class="inline-form">
+              <input type="hidden" name="provider" value={p.slug} />
+              <input
+                type="search"
+                name="q"
+                placeholder="4 vcpu 8gb"
+                aria-label="Search this provider"
+                data-omni
+              />
+              <button class="button primary small" type="submit">
+                Search
+              </button>
+            </form>
+            <p class="chips">
+              <a class="chip" href={`/servers?provider=${p.slug}&sort=price`}>
+                Cheapest
+              </a>
+              <a class="chip" href={`/servers?provider=${p.slug}&sort=value`}>
+                Best value
+              </a>
+              <a class="chip" href={`/servers?provider=${p.slug}&gpu=1`}>
+                GPU
+              </a>
+              <a class="chip" href={`/servers?provider=${p.slug}&kind=bare-metal`}>
+                Bare metal
+              </a>
+            </p>
+          </section>
+        ) : null}
       </div>
       <section class="section">
         <div class="section-head">
