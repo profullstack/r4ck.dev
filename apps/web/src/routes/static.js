@@ -26,6 +26,7 @@ const FILES = [
   'og.png',
   'fonts/Geist.woff2',
   'fonts/GeistMono.woff2',
+  '.well-known/openwebring.json',
 ];
 
 async function serve(c, name, { cache = 'public, max-age=3600' } = {}) {

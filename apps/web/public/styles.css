@@ -391,6 +391,11 @@ img {
 .footer nav a {
   color: var(--muted);
 }
+.footer nav.webring {
+  display: flex;
+  gap: 0.75rem;
+  font-size: 0.8rem;
+}
 @media (min-width: 52rem) {
   .footer-grid {
     grid-template-columns: 2fr 1fr 1fr 1fr;
