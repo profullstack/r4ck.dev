@@ -174,6 +174,21 @@ export function Layout({
                 <a href="https://www.findhost.app/">findhost.app</a>, CC BY 4.0. Prices in USD are
                 estimates from daily ECB rates.
               </p>
+              <nav class="webring" aria-label="Profullstack webring">
+                <a
+                  href="https://rssamplifier.com/ring/profullstack/previous?from=https%3A%2F%2Fr4ck.dev%2F"
+                  rel="prev"
+                >
+                  {'<<'}
+                </a>
+                <a href="https://rssamplifier.com/ring/profullstack">Profullstack</a>
+                <a
+                  href="https://rssamplifier.com/ring/profullstack/next?from=https%3A%2F%2Fr4ck.dev%2F"
+                  rel="next"
+                >
+                  {'>>'}
+                </a>
+              </nav>
             </div>
             <nav aria-label="Product">
               <h4>Product</h4>
