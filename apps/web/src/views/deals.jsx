@@ -1,7 +1,7 @@
 import { config } from '@r4ck/config';
 import { ago } from './home.jsx';
 import { Layout } from './Layout.jsx';
-import { AgentPanel } from './parts.jsx';
+import { AgentPanel, withAds } from './parts.jsx';
 
 export function Deals({ user, deals }) {
   return (
@@ -19,18 +19,22 @@ export function Deals({ user, deals }) {
         </p>
       </header>
       <ul class="deal-list">
-        {deals.map((d) => (
-          <li class="deal">
-            <span class={`badge ${d.kind === 'story' ? 'story' : 'deal'}`}>{d.kind}</span>
-            <a href={d.url} rel="noopener nofollow" target="_blank">
-              <strong>{d.title}</strong>
-            </a>
-            <p class="muted small clamp">{d.summary}</p>
-            <span class="muted small">
-              {d.source} · {ago(d.published_at)}
-            </span>
-          </li>
-        ))}
+        {withAds(
+          deals,
+          (d) => (
+            <li class="deal">
+              <span class={`badge ${d.kind === 'story' ? 'story' : 'deal'}`}>{d.kind}</span>
+              <a href={d.url} rel="noopener nofollow" target="_blank">
+                <strong>{d.title}</strong>
+              </a>
+              <p class="muted small clamp">{d.summary}</p>
+              <span class="muted small">
+                {d.source} · {ago(d.published_at)}
+              </span>
+            </li>
+          ),
+          { as: 'li' },
+        )}
       </ul>
       <AgentPanel
         agent={{

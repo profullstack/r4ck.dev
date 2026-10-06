@@ -253,10 +253,23 @@
       if (e.target.tagName === 'SELECT') f.requestSubmit();
     });
   const facets = $('#facets');
+  // A deferred ad frame (the rail's) loads only once its box is on screen: the
+  // rail is display:none on a phone until the filter drawer opens, and a frame
+  // meters its impression the moment it loads.
+  const showAds = () => {
+    for (const f of $$('iframe[data-ad-src]'))
+      if (f.offsetParent) {
+        f.src = f.dataset.adSrc;
+        f.removeAttribute('data-ad-src');
+      }
+  };
+  showAds();
+  matchMedia('(min-width: 60rem)').addEventListener('change', showAds);
   $$('[data-open-facets]').forEach((b) =>
     b.addEventListener('click', () => {
       facets?.classList.add('open');
       document.body.style.overflow = 'hidden';
+      showAds();
     }),
   );
   $$('[data-close-facets]').forEach((b) =>

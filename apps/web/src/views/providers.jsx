@@ -1,7 +1,17 @@
 import { config } from '@r4ck/config';
 import { countryName, fmtMoney } from '@r4ck/core';
 import { Layout } from './Layout.jsx';
-import { AgentPanel, Automation, flag, initials, Outbound, ProviderCard, Unit } from './parts.jsx';
+import {
+  AdFrame,
+  AgentPanel,
+  Automation,
+  flag,
+  initials,
+  Outbound,
+  ProviderCard,
+  Unit,
+  withAds,
+} from './parts.jsx';
 
 const csv = (v) =>
   String(v ?? '')
@@ -115,6 +125,7 @@ export function Providers({ user, result, params }) {
               </ul>
             </details>
           </div>
+          <AdFrame class="rail-ad" deferred />
         </aside>
         <section class="results">
           <header class="results-head">
@@ -153,7 +164,7 @@ export function Providers({ user, result, params }) {
             </form>
           </header>
           <div class="provider-grid">
-            {providers.map((p) => (
+            {withAds(providers, (p) => (
               <ProviderCard p={p} />
             ))}
           </div>
