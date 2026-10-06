@@ -3,6 +3,7 @@ import { countryName, fmtGb, fmtMoney, paramsFrom, SORTS } from '@r4ck/core';
 import { ago } from './home.jsx';
 import { Layout } from './Layout.jsx';
 import {
+  AdFrame,
   AgentPanel,
   Automation,
   Chips,
@@ -14,6 +15,7 @@ import {
   Price,
   Sparkline,
   Unit,
+  withAds,
 } from './parts.jsx';
 
 const SORT_LABELS = {
@@ -48,6 +50,7 @@ export function Servers({ user, result, page, params }) {
             </a>
           </div>
           <FacetRail facets={facets} filters={query} />
+          <AdFrame class="rail-ad" deferred />
         </aside>
         <section class="results">
           <header class="results-head">
@@ -95,7 +98,7 @@ export function Servers({ user, result, page, params }) {
             </div>
           ) : (
             <div class="unit-list">
-              {servers.map((s) => (
+              {withAds(servers, (s) => (
                 <Unit s={s} />
               ))}
             </div>

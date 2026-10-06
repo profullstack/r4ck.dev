@@ -48,6 +48,12 @@ export const config = Object.freeze({
     syncOnBoot: bool(env.SYNC_ON_BOOT, true),
     timeoutMs: num(env.NICHEDB_TIMEOUT_MS, 300_000),
   },
+  // CrawlProof ad slot (r4ck.dev, created with `crawlproof slots create`). The
+  // id is public, it rides in every embed; an empty value turns ads off.
+  ads: {
+    slot: env.CRAWLPROOF_AD_SLOT ?? (isTest ? '' : '5fb73b8c-3c4c-46a8-bc3a-08d4ae118b04'),
+    frameUrl: 'https://crawlproof.com/api/ads/frame',
+  },
   mail: {
     enabled: Boolean(env.RESEND_API_KEY),
     resendKey: env.RESEND_API_KEY ?? '',

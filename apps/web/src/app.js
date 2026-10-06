@@ -17,7 +17,7 @@ app.use('*', async (c, next) => {
   if (!c.req.path.startsWith('/api/') && c.req.path !== '/mcp')
     c.header(
       'content-security-policy',
-      "default-src 'self'; img-src 'self' https: data:; style-src 'self' 'unsafe-inline'; script-src 'self' https://crawlproof.com; font-src 'self'; connect-src 'self' https://crawlproof.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'",
+      "default-src 'self'; img-src 'self' https: data:; style-src 'self' 'unsafe-inline'; script-src 'self' https://crawlproof.com; font-src 'self'; connect-src 'self' https://crawlproof.com; frame-src https://crawlproof.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'",
     );
   await next();
 });

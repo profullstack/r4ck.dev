@@ -1,5 +1,6 @@
 import { config } from '@r4ck/config';
 import {
+  adSlots,
   BUCKETS,
   bucketActive,
   countryName,
@@ -33,6 +34,39 @@ export function Outbound({ url, domain, class: cls, children }) {
       {children}
       {out.affiliate ? <AffiliateMark /> : null}
     </a>
+  );
+}
+
+/**
+ * One CrawlProof ad, as its script-free frame: no JS, no cookie, and one
+ * `frame-src` in our CSP. `text_link` is the only fluid format (a 40px line
+ * that carries its own "Sponsored"), so it fits a row of results and the 17rem
+ * rail alike. `deferred` withholds the src until app.js sees the unit shown,
+ * for places hidden on a phone, since a frame meters its impression on load.
+ */
+export function AdFrame({ as: Tag = 'div', class: cls = '', deferred = false }) {
+  if (!config.ads.slot) return null;
+  const src = `${config.ads.frameUrl}?slot=${config.ads.slot}&format=text_link`;
+  return (
+    <Tag class={`ad-unit ${cls}`.trim()}>
+      <iframe
+        title="Advertisement"
+        {...(deferred ? { 'data-ad-src': src } : { src })}
+        width="100%"
+        height="40"
+        loading="lazy"
+        scrolling="no"
+        referrerpolicy="strict-origin-when-cross-origin"
+      />
+    </Tag>
+  );
+}
+
+/** Rows with an in-feed ad after every tenth, at most three a page (see adSlots). */
+export function withAds(items, render, adProps = {}) {
+  const after = new Set(adSlots(items.length));
+  return items.flatMap((item, i) =>
+    after.has(i) ? [render(item), <AdFrame {...adProps} />] : [render(item)],
   );
 }
 

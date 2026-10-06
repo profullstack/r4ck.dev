@@ -1507,6 +1507,24 @@ kbd {
     gap: 0.75rem;
   }
 }
+
+/* CrawlProof ad units: one 40px text_link line, no chrome of our own (the
+   creative carries its own "Sponsored"). In a grid of cards it takes a row. */
+.ad-unit {
+  list-style: none;
+  grid-column: 1 / -1;
+  line-height: 0;
+}
+.ad-unit iframe {
+  display: block;
+  width: 100%;
+  height: 40px;
+  border: 0;
+  color-scheme: normal;
+}
+.rail-ad {
+  margin-top: 0.75rem;
+}
 .deal-list {
   list-style: none;
   margin: 0;
