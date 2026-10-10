@@ -40,6 +40,7 @@
       "version": "0.1.0",
       "dependencies": {
         "@profullstack/emailer": "^1.0.3",
+        "@profullstack/footer": "latest",
         "@profullstack/r4ck": "workspace:*",
         "@profullstack/throttle": "^0.2.2",
         "@profullstack/x402-gateway": "^0.7.0",
@@ -168,6 +169,8 @@
     "@profullstack/api-key-manager": ["@profullstack/api-key-manager@0.3.0", "", { "dependencies": { "crypto": "^1.0.1", "uuid": "^11.1.0" }, "optionalDependencies": { "redis": "^4.6.13" } }, "sha512-/YpoRmhOaZm/2TbzhKgyE9xANQE3A8FGYqxduW2UkE22fGJdtTHRLU5eB9NjpDGgKBsQs33Tb52wAJN7mWvEIQ=="],
 
     "@profullstack/emailer": ["@profullstack/emailer@1.0.3", "", {}, "sha512-VyAtCcfnSI6LOwJvWogCr3ZNmEsaZw+iuWrqnosLsdcKsbRyCrCmXigMNZJZEjlgYlR+lK//PwNPG+xtCFvWAw=="],
+
+    "@profullstack/footer": ["@profullstack/footer@0.2.1", "", { "peerDependencies": { "react": ">=18" }, "optionalPeers": ["react"], "bin": { "profullstack-footer": "bin/profullstack-footer.js" } }, "sha512-KHmKVwrlzCBrSAAJ4zobNFCxTg8VF0gvNMeAut00dX3+gbWCtk6eOwIR2AaqEC7smj6Aio6cIexzt/dUnv1McA=="],
 
     "@profullstack/keys": ["@profullstack/keys@0.1.0", "", {}, "sha512-Vys47LvS5ivhdZu4SYOxh9Le3DEmWhjP0+CtrU45RhXAbY0ZFG/2Dk9V1bIIUGDp8UWMJqctvUD21JrNjfh04w=="],
 

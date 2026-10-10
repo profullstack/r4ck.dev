@@ -1,6 +1,7 @@
 import { config } from '@r4ck/config';
 import { raw } from 'hono/html';
 import { assetUrl } from '../lib/assets.js';
+import { PfsFooter } from '../lib/pfs-footer.js';
 
 /**
  * The one HTML shell. Dark ground by default, a light theme on request,
@@ -174,30 +175,6 @@ export function Layout({
                 <a href="https://www.findhost.app/">findhost.app</a>, CC BY 4.0. Prices in USD are
                 estimates from daily ECB rates.
               </p>
-              <nav class="webring" aria-label="Profullstack webring">
-                <a
-                  href="https://rssamplifier.com/ring/profullstack/previous?from=https%3A%2F%2Fr4ck.dev%2F"
-                  rel="prev"
-                  title="Previous site"
-                >
-                  {'<<'}
-                </a>
-                <a href="https://rssamplifier.com/ring/profullstack">Profullstack</a>
-                <a
-                  href="https://rssamplifier.com/ring/profullstack/next?from=https%3A%2F%2Fr4ck.dev%2F"
-                  rel="next"
-                  title="Next site"
-                >
-                  {'>>'}
-                </a>
-                <a
-                  href="https://rssamplifier.com/ring/profullstack/random?from=https%3A%2F%2Fr4ck.dev%2F"
-                  title="Random site"
-                  aria-label="Random site"
-                >
-                  {'⚄'}
-                </a>
-              </nav>
             </div>
             <nav aria-label="Product">
               <h4>Product</h4>
@@ -225,6 +202,8 @@ export function Layout({
             </nav>
           </div>
         </footer>
+        {/* Copyright and the Profullstack webring: lib/pfs-footer.js. */}
+        <PfsFooter />
         <nav class="bottomnav" aria-label="Sections">
           {[
             ['/', 'Home', 'home'],
