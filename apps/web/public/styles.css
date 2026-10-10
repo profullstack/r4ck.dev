@@ -391,10 +391,15 @@ img {
 .footer nav a {
   color: var(--muted);
 }
-.footer nav.webring {
-  display: flex;
-  gap: 0.75rem;
-  font-size: 0.8rem;
+/* The shared Profullstack footer (copyright + webring) continues the footer band. */
+.footer {
+  margin-bottom: 0;
+  padding-bottom: 1rem;
+}
+footer.pfs-footer {
+  --pfs-footer-muted: var(--muted);
+  background: var(--ground-2);
+  border-top: 0;
 }
 @media (min-width: 52rem) {
   .footer-grid {
