@@ -17,6 +17,7 @@ import { Denied } from './http.js';
  */
 export const OPEN_PATHS = [
   '/llms.txt',
+  '/install.sh',
   '/skill.md',
   '/mcp',
   '/api/',

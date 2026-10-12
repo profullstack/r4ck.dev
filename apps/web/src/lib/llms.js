@@ -66,7 +66,7 @@ Price buckets: ${BUCKETS.price.map((b) => b.label).join('; ')}.
 
 ## Tools
 
-- CLI: \`npm i -g @profullstack/r4ck\`, then \`r4ck search "2 vcpu 4gb under $10 in eu" --json\`.
+- CLI: \`curl -fsSL ${site}/install.sh | sh\` (or \`npm i -g @profullstack/r4ck\`), then \`r4ck search "2 vcpu 4gb under $10 in eu" --json\`.
 - MCP: \`claude mcp add r4ck -- r4ck mcp\` or point any client at ${site}/mcp.
 - Skill: ${site}/skill.md describes how to use this site well.
 - Source: https://github.com/profullstack/r4ck.dev. Data: ${config.nichedb.url}/c/hosting.

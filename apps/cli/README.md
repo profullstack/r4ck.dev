@@ -3,7 +3,7 @@
 [r4ck.dev](https://r4ck.dev) from the terminal, and for agents: search every VPS, cloud, bare metal, GPU and PaaS offer for sale, drill down by spec, price and place, and bridge the same tools into any MCP client.
 
 ```
-npm i -g @profullstack/r4ck
+curl -fsSL https://r4ck.dev/install.sh | sh   # or: npm i -g @profullstack/r4ck
 r4ck search "2 vcpu 4gb under $10 in eu"
 r4ck search --kind bare-metal --min-ram 64 --country US --sort price --json
 r4ck cheapest --min-vcpu 4 --min-ram 8 --has api,cli
