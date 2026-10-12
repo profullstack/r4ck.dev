@@ -23,6 +23,14 @@ claude mcp add r4ck -- r4ck mcp
 
 Access: read free (300 API requests an hour, 50 rows a page); a free key (magic link or passkey sign-in, 6,000 an hour, 200 rows, CSV export, saved searches); an x402 pass ($1 a day, no allowance) bought at `/crawl` with any x402 client. Going over an allowance answers `402` with the offer, never a bare `429`. Training crawlers pay the same pass on every page.
 
+## Install the CLI
+
+```
+curl -fsSL https://r4ck.dev/install.sh | sh
+```
+
+Uses bun if you have it, otherwise npm on Node 22 or later, and installs into `~/.local` rather than asking for sudo. Or `npm i -g @profullstack/r4ck`.
+
 ## Run it
 
 ```

@@ -266,7 +266,7 @@ export function CliDocs({ user }) {
         </p>
       </header>
       <pre>
-        <code>{`npm i -g @profullstack/r4ck\nr4ck search "2 vcpu 4gb under $10 in eu"\nr4ck search --kind bare-metal --min-ram 64 --country US --sort price --json\nr4ck cheapest --min-vcpu 4 --min-ram 8 --has api,cli\nr4ck compare 120 344 902\nr4ck providers --has cli --country DE\nr4ck login          # paste a key from ${site}/settings\nr4ck mcp            # stdio bridge for MCP clients`}</code>
+        <code>{`curl -fsSL ${site}/install.sh | sh   # or: npm i -g @profullstack/r4ck\nr4ck search "2 vcpu 4gb under $10 in eu"\nr4ck search --kind bare-metal --min-ram 64 --country US --sort price --json\nr4ck cheapest --min-vcpu 4 --min-ram 8 --has api,cli\nr4ck compare 120 344 902\nr4ck providers --has cli --country DE\nr4ck login          # paste a key from ${site}/settings\nr4ck mcp            # stdio bridge for MCP clients`}</code>
       </pre>
       <section class="panel">
         <h2>Commands</h2>

@@ -14,6 +14,7 @@ const TYPES = {
   woff2: 'font/woff2',
   json: 'application/json',
   txt: 'text/plain; charset=utf-8',
+  sh: 'text/x-sh; charset=utf-8',
   webmanifest: 'application/manifest+json',
 };
 const FILES = [
@@ -50,6 +51,8 @@ export function registerStatic(app) {
       : c.notFound(),
   );
   app.get('/sw.js', (c) => serve(c, 'sw.js', { cache: 'no-cache' }));
+  // curl -fsSL https://r4ck.dev/install.sh | sh
+  app.get('/install.sh', (c) => serve(c, 'install.sh', { cache: 'public, max-age=300' }));
 
   app.get('/manifest.webmanifest', (c) =>
     c.json(
