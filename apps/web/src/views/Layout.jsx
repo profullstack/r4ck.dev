@@ -1,7 +1,7 @@
 import { config } from '@r4ck/config';
 import { raw } from 'hono/html';
 import { assetUrl } from '../lib/assets.js';
-import { PfsFooter } from '../lib/pfs-footer.js';
+import { PitFooter } from '../lib/pit-footer.js';
 
 /**
  * The one HTML shell. Dark ground by default, a light theme on request,
@@ -157,53 +157,31 @@ export function Layout({
           {children}
         </main>
         <footer class="footer">
-          <div class="footer-grid">
-            <div>
-              <a class="brand" href="/">
-                <span class="wordmark">
-                  r<em>4</em>ck
-                </span>
-              </a>
-              <p class="muted">
-                The server search engine built for agents. Same query on the page, the API, the CLI
-                and MCP.
-              </p>
-              <p class="muted small">
-                Plan data mirrored from the{' '}
-                <a href={`${config.nichedb.url}/c/hosting`}>NicheDB hosting collection</a>. Provider
-                descriptions from the FindHost register,{' '}
-                <a href="https://www.findhost.app/">findhost.app</a>, CC BY 4.0. Prices in USD are
-                estimates from daily ECB rates.
-              </p>
-            </div>
-            <nav aria-label="Product">
-              <h4>Product</h4>
-              <a href="/servers">Servers</a>
-              <a href="/providers">Providers</a>
-              <a href="/compare">Compare</a>
-              <a href="/deals">Deals</a>
-              <a href="/pricing">Pricing</a>
-            </nav>
-            <nav aria-label="Agents">
-              <h4>For agents</h4>
-              <a href="/docs/api">API</a>
-              <a href="/docs/cli">CLI</a>
-              <a href="/docs/mcp">MCP</a>
-              <a href="/llms.txt">llms.txt</a>
-              <a href="/skill.md">skill.md</a>
-              <a href="/crawl">Crawl pass</a>
-            </nav>
-            <nav aria-label="Company">
-              <h4>Profullstack</h4>
-              <a href="/about">About</a>
-              <a href="https://github.com/profullstack/r4ck.dev">Source</a>
-              <a href="https://profullstack.com">profullstack.com</a>
-              <a href="https://logicsrc.com/docs/openserver">OpenServer</a>
-            </nav>
-          </div>
+          <nav class="footer-links" aria-label="Footer">
+            <a class="brand" href="/">
+              <span class="wordmark">
+                r<em>4</em>ck
+              </span>
+            </a>
+            <a href="/servers">Servers</a>
+            <a href="/providers">Providers</a>
+            <a href="/compare">Compare</a>
+            <a href="/deals">Deals</a>
+            <a href="/pricing">Pricing</a>
+            <a href="/docs/api">API</a>
+            <a href="/docs/cli">CLI</a>
+            <a href="/docs/mcp">MCP</a>
+            <a href="/about">About</a>
+            <a href="https://github.com/profullstack/r4ck.dev">Source</a>
+          </nav>
+          <p class="footer-note muted small">
+            &copy; {new Date().getFullYear()} <a href="https://profullstack.com">Profullstack</a>.
+            Plan data mirrored from the{' '}
+            <a href={`${config.nichedb.url}/c/hosting`}>NicheDB hosting collection</a>; provider
+            descriptions from <a href="https://www.findhost.app/">findhost.app</a>, CC BY 4.0. USD
+            prices are estimates from daily ECB rates.
+          </p>
         </footer>
-        {/* Copyright and the Profullstack webring: lib/pfs-footer.js. */}
-        <PfsFooter />
         <nav class="bottomnav" aria-label="Sections">
           {[
             ['/', 'Home', 'home'],
@@ -236,6 +214,8 @@ export function Layout({
         </dialog>
         <script src={vendor} defer></script>
         <script src={js} defer></script>
+        {/* The pit.world global footer, last in <body>: lib/pit-footer.js. */}
+        <PitFooter />
       </body>
     </html>
   );
