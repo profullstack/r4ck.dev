@@ -171,7 +171,11 @@ describe('affiliates.txt', () => {
 
 describe('Opalstack (Rewardful, forwards anywhere)', () => {
   test('is in the table and is not landing-only', () => {
-    expect(AFFILIATES['opalstack.com']).toEqual({ url: OPALSTACK, landingOnly: false });
+    expect(AFFILIATES['opalstack.com']).toEqual({
+      url: OPALSTACK,
+      landingOnly: false,
+      append: false,
+    });
   });
 
   test('every Opalstack link, front door or deep, goes through the referral link', () => {
@@ -185,5 +189,39 @@ describe('Opalstack (Rewardful, forwards anywhere)', () => {
       expect(out.affiliate).toBe(true);
       expect(out.rel).toBe(AFFILIATE_REL);
     }
+  });
+});
+
+const VULTR = 'https://www.vultr.com/?ref=6947475';
+
+describe('Vultr (?ref= on any page)', () => {
+  test('is in the table as an append link', () => {
+    expect(AFFILIATES['vultr.com']).toEqual({ url: VULTR, landingOnly: false, append: true });
+  });
+
+  test('the front door becomes the referral link', () => {
+    expect(outbound('https://www.vultr.com/', 'vultr.com').href).toBe(VULTR);
+  });
+
+  test('a deep link keeps its page and gains the ref', () => {
+    const out = outbound('https://www.vultr.com/pricing/', 'vultr.com');
+    expect(out.href).toBe('https://www.vultr.com/pricing/?ref=6947475');
+    expect(out.affiliate).toBe(true);
+    expect(out.rel).toBe(AFFILIATE_REL);
+  });
+
+  test('existing query parameters and hashes survive, and a stale ref is replaced', () => {
+    expect(outbound('https://www.vultr.com/products/?plan=vc2#gpu&x').href).toBe(
+      'https://www.vultr.com/products/?plan=vc2&ref=6947475#gpu&x',
+    );
+    expect(outbound('https://www.vultr.com/?ref=111').href).toBe(VULTR);
+  });
+
+  test('a Vultr row linking off vultr.com gets the referral link, not a stray ref', () => {
+    expect(outbound('https://example.com/vultr-review', 'vultr.com').href).toBe(VULTR);
+  });
+
+  test('an append line without a query is rejected', () => {
+    expect(parseAffiliates('v.com https://v.com/ append').errors).toHaveLength(1);
   });
 });
