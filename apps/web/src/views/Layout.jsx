@@ -1,6 +1,7 @@
 import { config } from '@r4ck/config';
 import { raw } from 'hono/html';
 import { assetUrl } from '../lib/assets.js';
+import { PfsFooter } from '../lib/pfs-footer.js';
 import { PitFooter } from '../lib/pit-footer.js';
 
 /**
@@ -175,13 +176,14 @@ export function Layout({
             <a href="https://github.com/profullstack/r4ck.dev">Source</a>
           </nav>
           <p class="footer-note muted small">
-            &copy; {new Date().getFullYear()} <a href="https://profullstack.com">Profullstack</a>.
             Plan data mirrored from the{' '}
             <a href={`${config.nichedb.url}/c/hosting`}>NicheDB hosting collection</a>; provider
             descriptions from <a href="https://www.findhost.app/">findhost.app</a>, CC BY 4.0. USD
             prices are estimates from daily ECB rates.
           </p>
         </footer>
+        {/* Copyright and the Profullstack webring: lib/pfs-footer.js. */}
+        <PfsFooter />
         <nav class="bottomnav" aria-label="Sections">
           {[
             ['/', 'Home', 'home'],
