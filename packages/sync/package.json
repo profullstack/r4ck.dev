@@ -6,11 +6,13 @@
   "main": "src/index.js",
   "exports": {
     ".": "./src/index.js",
-    "./nichedb": "./src/nichedb.js"
+    "./nichedb": "./src/nichedb.js",
+    "./daemon": "./src/daemon.js"
   },
   "dependencies": {
     "@r4ck/config": "workspace:*",
     "@r4ck/core": "workspace:*",
-    "@r4ck/db": "workspace:*"
+    "@r4ck/db": "workspace:*",
+    "@profullstack/scraper-daemon": "0.1.0"
   }
 }
