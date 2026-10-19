@@ -1,6 +1,7 @@
 import * as auth from '@r4ck/auth';
 import { config } from '@r4ck/config';
 import { KINDS, SORTS } from '@r4ck/core/facets';
+import { currentDaemon, openserverOrigins } from '@r4ck/sync/daemon';
 import { meterApi, pricing } from '../lib/gate.js';
 import { Denied, requireUser } from '../lib/http.js';
 import * as svc from '../lib/service.js';
@@ -26,6 +27,16 @@ export function registerApi(app) {
     if (c.req.method === 'OPTIONS') return c.body(null, 204);
     await next();
   });
+  // The updater daemon's own status, and what its openserver probe found: unmetered, before meterApi.
+  app.get('/api/v1/daemon', async (c) => {
+    const d = currentDaemon();
+    return c.json(
+      d ? await d.status() : { running: false, note: 'this process does not run the daemon' },
+    );
+  });
+  app.get('/api/v1/openserver-origins', async (c) =>
+    c.json({ origins: await openserverOrigins() }),
+  );
   app.use('/api/v1/*', meterApi);
 
   app.get('/api/v1', async (c) => {

@@ -1,7 +1,7 @@
 import { config } from '@r4ck/config';
 import { close as closeDb, healthcheck } from '@r4ck/db';
 import { migrate } from '@r4ck/db/migrate';
-import { startSyncLoop } from '@r4ck/sync';
+import { buildDaemon } from '@r4ck/sync/daemon';
 import { app } from './app.js';
 
 /** One process, one container. ROLES decides what runs: web, worker, or both. */
@@ -13,8 +13,9 @@ try {
 }
 if (!(await healthcheck())) throw new Error('database healthcheck failed at boot');
 
-let sync = null;
-if (config.roles.includes('worker')) sync = startSyncLoop();
+// The worker role is the updater daemon (@profullstack/scraper-daemon), see packages/sync/src/daemon.js.
+let daemon = null;
+if (config.roles.includes('worker') && config.nichedb.syncOnBoot) daemon = buildDaemon().start();
 
 let server = null;
 if (config.roles.includes('web')) {
@@ -26,8 +27,8 @@ if (config.roles.includes('web')) {
 
 async function shutdown(signal) {
   console.log(`[boot] ${signal}, draining`);
-  sync?.stop();
   server?.stop(true);
+  await daemon?.stop({ graceMs: 5_000 });
   await closeDb().catch(() => {});
   process.exit(0);
 }
