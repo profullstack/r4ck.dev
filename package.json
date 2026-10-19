@@ -1,6 +1,6 @@
 {
   "name": "r4ck",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "type": "module",
   "description": "r4ck.dev: the server search engine built for agents. Every VPS, bare metal, GPU and PaaS offer for sale, with drill-down filters, keys, x402 and an API, CLI and MCP that speak the same query.",

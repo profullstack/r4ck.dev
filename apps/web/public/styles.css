@@ -372,39 +372,26 @@ img {
 .footer {
   border-top: 1px solid var(--line);
   margin-top: 3rem;
-  padding: 2rem 1rem 3rem;
+  padding: 1.25rem 1rem;
   background: var(--ground-2);
 }
-.footer-grid {
+.footer-links,
+.footer-note {
   width: min(100% - 1rem, var(--wide));
   margin: 0 auto;
-  display: grid;
-  gap: 1.5rem;
-  grid-template-columns: 1fr;
 }
-.footer nav {
-  display: grid;
-  gap: 0.35rem;
-  align-content: start;
+.footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.4rem 1.1rem;
   font-size: 0.9rem;
 }
-.footer nav a {
+.footer-links a:not(.brand) {
   color: var(--muted);
 }
-/* The shared Profullstack footer (copyright + webring) continues the footer band. */
-.footer {
-  margin-bottom: 0;
-  padding-bottom: 1rem;
-}
-footer.pfs-footer {
-  --pfs-footer-muted: var(--muted);
-  background: var(--ground-2);
-  border-top: 0;
-}
-@media (min-width: 52rem) {
-  .footer-grid {
-    grid-template-columns: 2fr 1fr 1fr 1fr;
-  }
+.footer-note {
+  margin-top: 0.6rem;
 }
 
 /* ----------------------------------------------------------- controls -- */
