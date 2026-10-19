@@ -393,6 +393,12 @@ img {
 .footer-note {
   margin-top: 0.6rem;
 }
+/* The shared Profullstack footer (copyright + webring) continues the footer band. */
+footer.pfs-footer {
+  --pfs-footer-muted: var(--muted);
+  background: var(--ground-2);
+  border-top: 0;
+}
 
 /* ----------------------------------------------------------- controls -- */
 .button,
