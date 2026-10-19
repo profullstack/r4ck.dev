@@ -319,7 +319,12 @@ if (!url) {
       expect((await app.request('/robots.txt', ua('GoogleOther'))).status).toBe(200);
       // Googlebot is served from Google's published range; the same string from
       // anywhere else is an impostor and is charged (x402-gateway 0.10).
-      const google = { headers: { 'user-agent': 'Mozilla/5.0 (compatible; Googlebot/2.1)', 'x-real-ip': '66.249.66.1' } };
+      const google = {
+        headers: {
+          'user-agent': 'Mozilla/5.0 (compatible; Googlebot/2.1)',
+          'x-real-ip': '66.249.66.1',
+        },
+      };
       expect((await app.request('/servers', google)).status).toBe(200);
       expect((await app.request('/servers', ua('Googlebot/2.1'))).status).toBe(402);
     });
