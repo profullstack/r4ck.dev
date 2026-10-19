@@ -37,7 +37,16 @@ import { readFileSync } from 'node:fs';
  * reader for our revenue — which is the thing that makes a directory worth
  * nothing. An entry without `landing-only` is free to replace any link:
  * Opalstack's Rewardful link does, so every Opalstack link goes through it.
+ *
+ * ## Append links, which is what Vultr's is
+ *
+ * Some programmes are just a query parameter that works on any page
+ * (`https://www.vultr.com/?ref=6947475`). Marked `append`, the referral URL's
+ * query parameters are added to the original link instead of replacing it, so
+ * a click on a plan still lands on that plan's page and still earns.
  */
+
+const FLAGS = ['landing-only', 'append'];
 
 /** Read `affiliates.txt`: comments and blank lines skipped, one entry per line. */
 export function parseAffiliates(text) {
@@ -50,8 +59,8 @@ export function parseAffiliates(text) {
       if (!line) return;
       const [domain, url, flag, ...rest] = line.split(/\s+/);
       const where = `affiliates.txt:${i + 1}`;
-      if (!url || rest.length || (flag && flag !== 'landing-only')) {
-        errors.push(`${where}: expected "<domain> <url> [landing-only]"`);
+      if (!url || rest.length || (flag && !FLAGS.includes(flag))) {
+        errors.push(`${where}: expected "<domain> <url> [landing-only|append]"`);
         return;
       }
       let parsed;
@@ -64,7 +73,9 @@ export function parseAffiliates(text) {
       if (parsed.protocol !== 'https:') errors.push(`${where}: ${url} is not https`);
       const k = domain.toLowerCase().replace(/^www\./, '');
       if (table[k]) errors.push(`${where}: ${k} is listed twice`);
-      table[k] = { url, landingOnly: flag === 'landing-only' };
+      if (flag === 'append' && !parsed.search)
+        errors.push(`${where}: append needs a ?query to add`);
+      table[k] = { url, landingOnly: flag === 'landing-only', append: flag === 'append' };
     });
   return { table, errors };
 }
@@ -136,6 +147,23 @@ export function outbound(url, domain) {
   const entry = affiliateFor(domain ?? hostOf(url));
   if (!entry) return plain;
   if (entry.landingOnly && !isFrontDoor(url)) return plain;
+  // Only on the provider's own pages: a ref on somebody else's URL earns nothing.
+  if (entry.append && affiliateFor(hostOf(url)) === entry) {
+    const href = withParams(url, entry.url);
+    return href ? { href, affiliate: true, rel: AFFILIATE_REL } : plain;
+  }
 
   return { href: entry.url, affiliate: true, rel: AFFILIATE_REL };
+}
+
+/** `url` with the referral's query parameters set on it, or null if it is not a URL. */
+function withParams(url, referral) {
+  let u;
+  try {
+    u = new URL(String(url));
+  } catch {
+    return null;
+  }
+  for (const [k, v] of new URL(referral).searchParams) u.searchParams.set(k, v);
+  return u.toString();
 }
