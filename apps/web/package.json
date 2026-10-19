@@ -7,8 +7,8 @@
   "dependencies": {
     "@profullstack/footer": "latest",
     "@profullstack/emailer": "^1.0.3",
-    "@profullstack/throttle": "^0.3.1",
-    "@profullstack/x402-gateway": "^0.9.0",
+    "@profullstack/throttle": "^0.3.2",
+    "@profullstack/x402-gateway": "^0.10.1",
     "@r4ck/auth": "workspace:*",
     "@r4ck/config": "workspace:*",
     "@r4ck/core": "workspace:*",
