@@ -1688,3 +1688,21 @@ kbd {
     color: #000;
   }
 }
+
+/* ad.network publisher unit (home page), centred between sections */
+.ad-network {
+  display: flex;
+  justify-content: center;
+  margin: 24px auto;
+}
+.ad-network iframe {
+  display: block;
+  width: 300px;
+  height: 250px;
+  border: 0;
+}
+@media (max-width: 340px) {
+  .ad-network {
+    margin-inline: calc(50% - 50vw);
+  }
+}
