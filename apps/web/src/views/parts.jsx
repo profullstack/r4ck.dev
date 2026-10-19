@@ -62,6 +62,34 @@ export function AdFrame({ as: Tag = 'div', class: cls = '', deferred = false }) 
   );
 }
 
+/**
+ * The ad.network publisher unit (home page): a 300x250 CrawlProof frame, script
+ * free like AdFrame, tagged with the claim code ad.network looks for.
+ */
+export function AdNetworkUnit() {
+  const { claim, slot } = config.ads.network;
+  if (!claim || !slot) return null;
+  return (
+    <aside
+      class="ad-network"
+      data-ad-network={claim}
+      data-cp-ad=""
+      data-slot={slot}
+      data-format="banner_300x250"
+      aria-label="Advertisement"
+    >
+      <iframe
+        src={`${config.ads.frameUrl}?slot=${slot}&format=banner_300x250`}
+        width="300"
+        height="250"
+        loading="lazy"
+        style="border:0"
+        title="Advertisement"
+      />
+    </aside>
+  );
+}
+
 /** Rows with an in-feed ad after every tenth, at most three a page (see adSlots). */
 export function withAds(items, render, adProps = {}) {
   const after = new Set(adSlots(items.length));

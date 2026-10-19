@@ -53,6 +53,12 @@ export const config = Object.freeze({
   ads: {
     slot: env.CRAWLPROOF_AD_SLOT ?? (isTest ? '' : '5fb73b8c-3c4c-46a8-bc3a-08d4ae118b04'),
     frameUrl: 'https://crawlproof.com/api/ads/frame',
+    // The ad.network publisher unit on the home page. ad.network verifies the
+    // site by finding the claim code in the raw HTML of https://r4ck.dev/.
+    network: {
+      claim: env.AD_NETWORK_CLAIM ?? 'bZRCqtmxpkRKjRH0',
+      slot: env.AD_NETWORK_SLOT ?? '1f55ba98-c779-4496-bd11-8aebbf304938',
+    },
   },
   mail: {
     enabled: Boolean(env.RESEND_API_KEY),
