@@ -10,9 +10,11 @@
     "./daemon": "./src/daemon.js"
   },
   "dependencies": {
-    "@profullstack/scraper-daemon": "0.1.1",
+    "@profullstack/scraper-daemon": "0.2.1",
     "@r4ck/config": "workspace:*",
     "@r4ck/core": "workspace:*",
-    "@r4ck/db": "workspace:*"
+    "@r4ck/db": "workspace:*",
+    "bullmq": "6.3.17",
+    "ioredis": "5"
   }
 }

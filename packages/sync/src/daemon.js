@@ -29,7 +29,10 @@ export function looksLikeOpenServer(doc) {
 export function buildDaemon({ log = console.log } = {}) {
   const daemon = createDaemon({
     name: config.siteName,
-    store: pgStore((text, params) => sql.unsafe(text, params)),
+    // BullMQ on the site's own Redis (the compose `redis` service): queue, run records and task
+    // state live there; the catalogue stays in Postgres. No REDIS_URL (dev, tests): local engine on Postgres.
+    redis: process.env.REDIS_URL || null,
+    store: process.env.REDIS_URL ? undefined : pgStore((text, params) => sql.unsafe(text, params)),
     concurrency: Number(process.env.DAEMON_CONCURRENCY ?? 4),
     fetch: {
       userAgent: `r4ck.dev/0.2 (+${config.siteUrl}/docs)`,
