@@ -3,7 +3,6 @@ import { countryName, fmtGb, fmtMoney, paramsFrom, SORTS } from '@r4ck/core';
 import { ago } from './home.jsx';
 import { Layout } from './Layout.jsx';
 import {
-  AdFrame,
   AgentPanel,
   Automation,
   Chips,
@@ -50,7 +49,6 @@ export function Servers({ user, result, page, params }) {
             </a>
           </div>
           <FacetRail facets={facets} filters={query} />
-          <AdFrame class="rail-ad" deferred />
         </aside>
         <section class="results">
           <header class="results-head">
