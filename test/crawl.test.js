@@ -76,3 +76,20 @@ describe('/crawl page', () => {
     expect(html).toContain('<title>Crawl pass · r4ck</title>');
   });
 });
+
+describe('/crawl Buy a day pass', () => {
+  test('renders the checkout form from the gateway context', () => {
+    const html = renderCrawl({
+      ...ctx,
+      checkout: { action: '/crawl/checkout', from: '/racks', days: 1 },
+    });
+    expect(html).toContain('Buy a day pass');
+    expect(html).toContain('action="/crawl/checkout"');
+    expect(html).toContain('name="from" value="/racks"');
+    expect(html).toContain('name="email"');
+  });
+
+  test('hides it while CoinPay checkout is unavailable', () => {
+    expect(renderCrawl({ ...ctx, checkout: null })).not.toContain('/crawl/checkout');
+  });
+});

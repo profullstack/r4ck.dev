@@ -112,6 +112,43 @@ export function Crawl({ ctx }) {
         ) : null}
       </section>
 
+      {ctx.checkout ? (
+        <section class="panel" id="buy-pass">
+          <h2>Buy a day pass</h2>
+          <p class="muted">
+            Pay {price} a day with any coin CoinPay takes or with PayPal. The pass appears on the
+            next page and works with any HTTP client.
+          </p>
+          <form method="post" action={ctx.checkout.action}>
+            <input type="hidden" name="from" value={ctx.checkout.from ?? ''} />
+            <label class="muted" for="pass-email">
+              Email for the receipt
+            </label>
+            <input
+              id="pass-email"
+              type="email"
+              name="email"
+              required
+              autocomplete="email"
+              placeholder="you@example.com"
+            />
+            <label class="muted" for="pass-days">
+              Days
+            </label>
+            <input
+              id="pass-days"
+              type="number"
+              name="days"
+              min="1"
+              max={String(maxDays)}
+              value={String(ctx.checkout.days ?? days ?? 1)}
+            />
+            <button type="submit">Buy a day pass</button>
+          </form>
+          <p class="muted small">Checkout is hosted by CoinPay. Up to {maxDays} days at once.</p>
+        </section>
+      ) : null}
+
       {throttled ? (
         <section class="panel">
           <h2>Before you reach for a proxy pool</h2>
