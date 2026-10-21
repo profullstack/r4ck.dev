@@ -2,7 +2,6 @@ import { config } from '@r4ck/config';
 import { countryName, fmtMoney } from '@r4ck/core';
 import { Layout } from './Layout.jsx';
 import {
-  AdFrame,
   AgentPanel,
   Automation,
   flag,
@@ -125,7 +124,6 @@ export function Providers({ user, result, params }) {
               </ul>
             </details>
           </div>
-          <AdFrame class="rail-ad" deferred />
         </aside>
         <section class="results">
           <header class="results-head">

@@ -1,7 +1,7 @@
 import { config } from '@r4ck/config';
 import { fmtMoney } from '@r4ck/core';
 import { Layout } from './Layout.jsx';
-import { AdNetworkUnit, AgentPanel, ProviderCard, Stat, Unit } from './parts.jsx';
+import { AgentPanel, ProviderCard, Stat, Unit } from './parts.jsx';
 
 const EXAMPLES = [
   ['2 vcpu 4gb under $10 in eu', 'Cheap EU VPS'],
@@ -116,8 +116,6 @@ export function Home({ user, stats, cheapest, gpu, providers }) {
           ))}
         </div>
       </section>
-
-      <AdNetworkUnit />
 
       <section class="section split">
         <div>
