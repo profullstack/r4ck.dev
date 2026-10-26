@@ -1,15 +1,17 @@
+import { mountProfileRoutes } from '@profullstack/profile';
 import * as auth from '@r4ck/auth';
 import { config } from '@r4ck/config';
 import { KINDS, SORTS } from '@r4ck/core/facets';
 import { currentDaemon, openserverOrigins } from '@r4ck/sync/daemon';
 import { meterApi, pricing } from '../lib/gate.js';
 import { Denied, requireUser } from '../lib/http.js';
+import { profiles, profileUser } from '../lib/profile.js';
 import * as svc from '../lib/service.js';
 
 const CORS = {
   'access-control-allow-origin': '*',
   'access-control-allow-headers': 'content-type, authorization, x-api-key, x-crawl-pass',
-  'access-control-allow-methods': 'GET, POST, DELETE, OPTIONS',
+  'access-control-allow-methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
   'access-control-expose-headers':
     'x-plan, x-ratelimit-limit, x-ratelimit-remaining, x-ratelimit-reset',
 };
@@ -64,6 +66,7 @@ export function registerApi(app) {
         '/api/v1/deals',
         '/api/v1/stats',
         '/api/v1/me',
+        '/api/v1/me/profile',
         '/api/v1/keys',
         '/api/v1/saved',
       ],
@@ -180,6 +183,8 @@ export function registerApi(app) {
       saved: (await svc.listSaved(user)).saved,
     });
   });
+  // The shared @profullstack/profile row: GET/PUT/PATCH, the package's own handlers.
+  mountProfileRoutes(app, { store: profiles, getUser: (_req, c) => profileUser(c) });
   app.get('/api/v1/keys', async (c) =>
     c.json({ keys: (await auth.listApiKeys(requireUser(c).id)).map(keyOut) }),
   );
