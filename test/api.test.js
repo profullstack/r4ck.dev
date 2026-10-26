@@ -381,7 +381,9 @@ if (!url) {
       ).text();
       for (const name of ['first_name', 'last_name', 'company_domain', 'job_title', 'linkedin_url'])
         expect(signup).toContain(`name="${name}"`);
-      expect(signup.match(/name="email"/g)?.length).toBe(1);
+      // The shared footer's newsletter form (@profullstack/footer 0.3+) has its own email field.
+      const signupForm = signup.slice(0, signup.indexOf('class="pfs-footer'));
+      expect(signupForm.match(/name="email"/g)?.length).toBe(1);
       expect(signup).toContain('/vendor-profile.js');
       const login = await (
         await app.request('/login', { headers: { accept: 'text/html' } })
