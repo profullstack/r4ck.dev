@@ -3,6 +3,7 @@ import * as auth from '@r4ck/auth';
 import { config } from '@r4ck/config';
 import { KINDS, SORTS } from '@r4ck/core/facets';
 import { currentDaemon, openserverOrigins } from '@r4ck/sync/daemon';
+import { passFor } from '../lib/credits.js';
 import { meterApi, pricing } from '../lib/gate.js';
 import { Denied, requireUser } from '../lib/http.js';
 import { profiles, profileUser } from '../lib/profile.js';
@@ -69,6 +70,9 @@ export function registerApi(app) {
         '/api/v1/me/profile',
         '/api/v1/keys',
         '/api/v1/saved',
+        '/api/v1/pass',
+        '/api/v1/credits/redeem',
+        '/api/v1/invites',
       ],
       kinds: KINDS,
       sorts: SORTS,
@@ -179,6 +183,7 @@ export function registerApi(app) {
       email: user.email,
       role: user.role,
       plan: c.get('access').plan,
+      pass_until: (await passFor(user)).until,
       keys: keys.map(keyOut),
       saved: (await svc.listSaved(user)).saved,
     });

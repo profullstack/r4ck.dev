@@ -5,9 +5,12 @@
   "type": "module",
   "main": "src/main.js",
   "dependencies": {
-    "@profullstack/footer": "latest",
+    "@profullstack/affiliates": "0.3.0",
     "@profullstack/emailer": "^1.0.3",
+    "@profullstack/footer": "latest",
     "@profullstack/profile": "0.1.6",
+    "@profullstack/r4ck": "workspace:*",
+    "@profullstack/redeem-credits": "0.2.0",
     "@profullstack/throttle": "^0.3.4",
     "@profullstack/x402-gateway": "^0.13.1",
     "@r4ck/auth": "workspace:*",
@@ -15,7 +18,6 @@
     "@r4ck/core": "workspace:*",
     "@r4ck/db": "workspace:*",
     "@r4ck/sync": "workspace:*",
-    "@profullstack/r4ck": "workspace:*",
     "@simplewebauthn/browser": "^14.0.0",
     "hono": "^4.13.14"
   }

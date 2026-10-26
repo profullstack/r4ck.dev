@@ -2,6 +2,7 @@ import { validateProfile } from '@profullstack/profile';
 import * as auth from '@r4ck/auth';
 import { config } from '@r4ck/config';
 import * as accounts from '@r4ck/db/accounts';
+import * as credits from '../lib/credits.js';
 import { accessFor } from '../lib/gate.js';
 import { Denied, notice, render, requireUser, respond, wantsJson } from '../lib/http.js';
 import { profiles } from '../lib/profile.js';
@@ -12,6 +13,40 @@ import { About, ApiDocs, CliDocs, Pricing } from '../views/docs.jsx';
 import { Home } from '../views/home.jsx';
 import { Provider, Providers } from '../views/providers.jsx';
 import { Compare, Server, Servers } from '../views/servers.jsx';
+
+/**
+ * The account page. `extra.freshCode` is a credit code an admin just minted,
+ * shown once on the page that answers the form, never put in a URL.
+ */
+export async function settingsPage(c, extra = {}) {
+  const user = requireUser(c);
+  const admin = user.role === 'admin';
+  const [keys, passkeys, saved, contact, pass, codes] = await Promise.all([
+    auth.listApiKeys(user.id),
+    accounts.listPasskeys(user.id),
+    svc.listSaved(user),
+    profiles.get(user.id),
+    credits.passFor(user),
+    admin ? credits.services().credits.list() : Promise.resolve(null),
+  ]);
+  c.header('cache-control', 'private, no-store');
+  return c.html(
+    await render(
+      <Settings
+        user={user}
+        keys={keys}
+        passkeys={passkeys}
+        saved={saved.saved}
+        contact={contact ?? { email: user.email }}
+        freshKey={c.req.query('key')}
+        pass={pass}
+        codes={codes ? codes.map((x) => credits.codeOut(x)) : null}
+        freshCode={extra.freshCode ?? null}
+        {...notice(c)}
+      />,
+    ),
+  );
+}
 
 const raw = (c) => {
   const out = {};
@@ -105,28 +140,7 @@ export function registerPages(app) {
   app.get('/docs/cli', async (c) => c.html(await render(<CliDocs user={c.get('user')} />)));
 
   /* ------------------------------------------------------------ account -- */
-  app.get('/settings', async (c) => {
-    const user = requireUser(c);
-    const [keys, passkeys, saved, contact] = await Promise.all([
-      auth.listApiKeys(user.id),
-      accounts.listPasskeys(user.id),
-      svc.listSaved(user),
-      profiles.get(user.id),
-    ]);
-    return c.html(
-      await render(
-        <Settings
-          user={user}
-          keys={keys}
-          passkeys={passkeys}
-          saved={saved.saved}
-          contact={contact ?? { email: user.email }}
-          freshKey={c.req.query('key')}
-          {...notice(c)}
-        />,
-      ),
-    );
-  });
+  app.get('/settings', (c) => settingsPage(c));
   // The shared profile (names, company, title, LinkedIn), for a page without
   // script; /api/v1/me/profile is the same thing for API callers. Not under
   // /api/, where every answer is JSON, so a plain form post gets its redirect.

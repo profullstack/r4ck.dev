@@ -1,6 +1,7 @@
 import { COLUMNS as PROFILE_COLUMNS, renderProfileFields } from '@profullstack/profile';
 import { config } from '@r4ck/config';
 import { raw } from 'hono/html';
+import { CodesPanel, PassPanel } from './credits.jsx';
 import { ago } from './home.jsx';
 import { Layout } from './Layout.jsx';
 
@@ -19,6 +20,7 @@ export function SignIn({
   user = null,
   values = null,
   errors = null,
+  invite = null,
 }) {
   const signup = mode === 'signup';
   return (
@@ -36,6 +38,14 @@ export function SignIn({
             : 'A link by email, or a passkey if you have one here. No passwords.'}
         </p>
         {error ? <p class="notice error">{error}</p> : null}
+        {signup && invite && !sent ? (
+          <p class="notice ok">
+            You were invited (<code>{invite}</code>).
+            {config.invites.bonusDays > 0
+              ? ` Make your account from the emailed link and you both get ${config.invites.bonusDays} days of the pass.`
+              : ''}
+          </p>
+        ) : null}
         {sent ? (
           <p class="notice ok">
             If that address can receive mail, a sign-in link is on its way. It works once and
@@ -46,6 +56,7 @@ export function SignIn({
             <form method="post" action="/api/auth/magic" class="stack">
               <input type="hidden" name="next" value={next ?? '/settings'} />
               {signup ? <input type="hidden" name="mode" value="signup" /> : null}
+              {signup && invite ? <input type="hidden" name="invite" value={invite} /> : null}
               <label>
                 Email
                 <input
@@ -98,7 +109,19 @@ export function SignIn({
   );
 }
 
-export function Settings({ user, keys, passkeys, saved, contact = null, freshKey, notice, error }) {
+export function Settings({
+  user,
+  keys,
+  passkeys,
+  saved,
+  contact = null,
+  freshKey,
+  pass = null,
+  codes = null,
+  freshCode = null,
+  notice,
+  error,
+}) {
   return (
     <Layout user={user} path="/settings" title="Settings">
       <header class="page-head">
@@ -211,6 +234,8 @@ export function Settings({ user, keys, passkeys, saved, contact = null, freshKey
           </p>
         </section>
       </div>
+      <PassPanel pass={pass} />
+      {codes ? <CodesPanel codes={codes} freshCode={freshCode} /> : null}
       <section class="panel" id="contact">
         <h2>Contact details</h2>
         <p class="muted small">

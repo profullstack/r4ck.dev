@@ -1,5 +1,6 @@
 import { config } from '@r4ck/config';
 import { ALL_PARAMS, KINDS, SORTS } from '@r4ck/core/facets';
+import * as credits from '../credits.js';
 import * as svc from '../service.js';
 
 /**
@@ -180,6 +181,41 @@ export const TOOLS = [
     schema: { type: 'object', properties: { id: { type: 'string' } }, required: ['id'] },
     run: (args, ctx) => svc.deleteSaved(needUser(ctx), String(args.id ?? '')),
   },
+  {
+    name: 'redeem_code',
+    title: 'Redeem a credit code',
+    description:
+      'Redeem a credit code (CR-…) on the caller’s account for days of the pass: no hourly allowance and 500 rows a page on every key, the CLI and MCP while it runs.',
+    key: true,
+    schema: { type: 'object', properties: { code: { type: 'string' } }, required: ['code'] },
+    run: async (args, ctx) => {
+      const r = await credits.redeemCode(needUser(ctx).id, args.code);
+      if (!r.ok) throw toolError(r.error);
+      return { ok: true, unit: credits.UNIT, days: r.days, pass_until: r.until };
+    },
+  },
+  {
+    name: 'list_invites',
+    title: 'My invites',
+    description:
+      'The caller’s invites (quota, status of each) and open affiliate link. Invites are scarce and single use.',
+    key: true,
+    schema: { type: 'object', properties: {} },
+    run: (_args, ctx) => credits.myInvites(needUser(ctx)),
+  },
+  {
+    name: 'create_invite',
+    title: 'Make an invite',
+    description:
+      'Make one invite link from the caller’s quota. The link is returned once; both sides get days of the pass when a new account is made from it.',
+    key: true,
+    schema: { type: 'object', properties: { note: { type: 'string' } } },
+    run: async (args, ctx) => {
+      const r = await credits.createInvite(needUser(ctx), { note: args.note });
+      if (!r.ok) throw toolError(r.error);
+      return r.invite;
+    },
+  },
 ];
 
 export const TOOLS_BY_NAME = new Map(TOOLS.map((t) => [t.name, t]));
@@ -199,7 +235,9 @@ export const describe = (t) => ({
   description: t.description,
   inputSchema: t.schema,
   annotations: {
-    readOnlyHint: !['save_search', 'delete_saved_search'].includes(t.name),
+    readOnlyHint: !['save_search', 'delete_saved_search', 'redeem_code', 'create_invite'].includes(
+      t.name,
+    ),
     openWorldHint: false,
   },
 });

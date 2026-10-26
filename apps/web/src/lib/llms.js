@@ -116,5 +116,9 @@ without a browser. \`has=mcp\` finds the ones with an MCP server.
 Anonymous: 300 requests an hour, 50 rows a page. A free key (\`Authorization: Bearer r4k_…\`, made at
 ${site}/settings) gives 6,000 an hour, 200 rows and CSV export. An x402 pass (\`${site}/crawl\`,
 one dollar a day) removes the allowance. Over the limit you get a 402 with the offer, not a 429.
+
+A credit code (\`CR-…\`) adds days of the pass to an account: \`POST ${site}/api/v1/credits/redeem
+{"code": "…"}\` with the key, \`r4ck redeem <code>\`, or the \`redeem_code\` MCP tool. While it runs,
+every key on that account is served as a pass.
 `;
 }
