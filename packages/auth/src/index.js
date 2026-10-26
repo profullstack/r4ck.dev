@@ -31,7 +31,7 @@ export const expectedOrigins = (() => {
 
 const hashToken = (t) => createHash('sha256').update(t).digest();
 
-export async function createLoginLink(email, { next, profile = null } = {}) {
+export async function createLoginLink(email, { next, profile = null, invite = null } = {}) {
   const token = randomBytes(32).toString('base64url');
   await q.insertLoginToken({
     tokenHash: hashToken(token),
@@ -39,6 +39,9 @@ export async function createLoginLink(email, { next, profile = null } = {}) {
     expiresAt: new Date(Date.now() + TOKEN_TTL_MINUTES * 60_000),
     // Signup form fields, already validated by the caller; saved on verify.
     profile,
+    // An invite code from /i/<code>, carried on the link so it still counts when
+    // the link is opened in a browser that never saw the invite cookie.
+    inviteCode: invite,
   });
   const url = new URL('/auth/magic', config.siteUrl);
   url.searchParams.set('t', token);
@@ -52,6 +55,7 @@ export async function consumeLoginLink(token, { userAgent } = {}) {
   const email = await q.consumeLoginToken(tokenHash);
   if (!email) return null;
   const profile = await q.takeSignupProfile(tokenHash);
+  const invite = await q.loginTokenInvite(tokenHash);
   const user = await q.findOrCreateUser(email, {
     admin: config.adminEmails.includes(String(email).toLowerCase()),
   });
@@ -60,7 +64,7 @@ export async function consumeLoginLink(token, { userAgent } = {}) {
     ttlDays: config.session.ttlDays,
     userAgent,
   });
-  return { user, sessionId, profile };
+  return { user, sessionId, profile, invite };
 }
 
 export async function passkeyRegistrationOptions(user) {

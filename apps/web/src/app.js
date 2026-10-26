@@ -3,6 +3,7 @@ import { gate } from './lib/gate.js';
 import { Denied, loadUser, render, wantsJson } from './lib/http.js';
 import { registerApi } from './routes/api.js';
 import { registerAuth } from './routes/auth.js';
+import { registerCredits, rememberRef } from './routes/credits.js';
 import { registerMcp } from './routes/mcp.js';
 import { registerPages } from './routes/pages.js';
 import { registerStatic } from './routes/static.js';
@@ -23,6 +24,7 @@ app.use('*', async (c, next) => {
 });
 app.use('*', gate);
 app.use('*', loadUser);
+app.use('*', rememberRef);
 
 app.onError(async (err, c) => {
   if (err?.redirect) return c.redirect(err.redirect, 303);
@@ -52,5 +54,6 @@ app.notFound(async (c) => {
 registerStatic(app);
 registerAuth(app);
 registerApi(app);
+registerCredits(app);
 registerMcp(app);
 registerPages(app);

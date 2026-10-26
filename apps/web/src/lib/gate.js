@@ -1,5 +1,5 @@
 import { createThrottle, memoryStore } from '@profullstack/throttle';
-import { createGateway } from '@profullstack/x402-gateway';
+import { createGateway, mintPass } from '@profullstack/x402-gateway';
 import { config } from '@r4ck/config';
 import * as accounts from '@r4ck/db/accounts';
 import { renderCrawl } from '../views/crawl.jsx';
@@ -28,6 +28,8 @@ export const OPEN_PATHS = [
   '/docs',
   '/docs/',
   '/.well-known/',
+  // An invite link is a person's first visit, often unfurled by a chat app first.
+  '/i/',
 ];
 
 export const gateway = createGateway({
@@ -102,6 +104,10 @@ export async function accessFor(c) {
   if (token && (await gateway.verifyPass(token)))
     return { plan: 'pass', perHour: null, maxRows: 500, bulk: true, bucket: null };
   const user = c.get('user');
+  // A pass the account holds (a redeemed code, an invite bonus) covers every
+  // request it makes: the browser session, its API keys, the CLI and MCP.
+  if (user && (await accounts.accountPassUntil(user.id).catch(() => null)))
+    return { plan: 'pass', perHour: null, maxRows: 500, bulk: true, bucket: null };
   if (user && c.get('viaKey'))
     return {
       plan: 'key',
@@ -125,6 +131,23 @@ export async function accessFor(c) {
     bulk: false,
     bucket: `ip:${callerAddress(c)}`,
   };
+}
+
+/**
+ * A bearer pass for the account's running term, the same signed token a paid
+ * pass is, so it also opens r4ck from a script with no key. Null when no
+ * signing secret is configured. Checked with the gateway's own verify, so a
+ * token this mints is one the gateway honours.
+ */
+export async function accountPassToken(userId, until) {
+  const secret = gateway.options.secret || gateway.options.coinpay.apiKey;
+  if (!secret || !until) return null;
+  const minted = await mintPass({
+    secret,
+    ref: `account:${userId}`,
+    expiresAt: Math.floor(new Date(until).getTime() / 1000),
+  });
+  return (await gateway.verifyPass(minted.token)) ? minted.token : null;
 }
 
 export function callerAddress(c) {

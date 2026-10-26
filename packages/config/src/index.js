@@ -74,6 +74,20 @@ export const config = Object.freeze({
     maxDays: num(env.CRAWL_MAX_DAYS, 30),
     contact: env.CRAWL_CONTACT ?? 'mailto:hello@profullstack.com',
   },
+  /**
+   * Credit codes (@profullstack/redeem-credits) and invites (@profullstack/affiliates).
+   * Both pay out in days of the x402 pass, held by the account. Invites are
+   * scarce on purpose: a few per account, single use, and the bonus is paid only
+   * for a NEW account whose emailed link proved the mailbox and that passes the
+   * spam checks in apps/web/src/lib/credits.js.
+   */
+  invites: {
+    quota: num(env.INVITE_QUOTA, 3),
+    bonusDays: num(env.INVITE_BONUS_PASS_DAYS, 7),
+    ttlDays: num(env.INVITE_TTL_DAYS, 30),
+    inviterMinAgeDays: num(env.INVITER_MIN_AGE_DAYS, 7),
+    monthlyCap: num(env.INVITE_MONTHLY_CAP, 10),
+  },
   fxRates: (() => {
     try {
       return env.FX_RATES_JSON ? JSON.parse(env.FX_RATES_JSON) : null;

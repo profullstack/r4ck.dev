@@ -9,7 +9,7 @@ import { createInterface } from 'node:readline';
  * reply verbatim, otherwise a table a person can read. `r4ck mcp` bridges
  * stdio to the site's MCP endpoint so any client gets every tool.
  */
-export const VERSION = '0.1.0';
+export const VERSION = '0.2.0';
 const DEFAULT_API = process.env.R4CK_API ?? 'https://r4ck.dev';
 const CONFIG_DIR = join(process.env.XDG_CONFIG_HOME ?? join(homedir(), '.config'), 'r4ck');
 const CONFIG_FILE = join(CONFIG_DIR, 'config.json');
@@ -53,6 +53,17 @@ export const COMMANDS = [
     name: 'saved',
     usage: 'saved [list|add <name> [filters]|rm <id>]',
     help: 'Saved searches on the account.',
+  },
+  {
+    name: 'redeem',
+    usage: 'redeem <CR-code>',
+    help: 'Redeem a credit code for days of the pass on your account.',
+  },
+  { name: 'pass', usage: 'pass', help: 'When the pass on your account runs out, and its token.' },
+  {
+    name: 'invites',
+    usage: 'invites [list|create [note]|revoke <id>]',
+    help: 'Your scarce invites (both sides get pass days) and your link.',
   },
   {
     name: 'open',
@@ -440,6 +451,42 @@ export async function run(
         return say('removed');
       }
       throw new Error('usage: r4ck saved [list|add <name> [filters]|rm <id>]');
+    }
+    case 'redeem': {
+      if (!rest[0]) throw new Error('usage: r4ck redeem <code>');
+      const r = await client.post('/api/v1/credits/redeem', { code: rest.join(' ') });
+      return flags.json
+        ? json(r)
+        : say(`Redeemed: ${r.days} days of pass. Unmetered until ${r.pass_until}.`);
+    }
+    case 'pass': {
+      const r = await client.get('/api/v1/pass');
+      if (flags.json) return json(r);
+      return say(
+        r.until
+          ? `pass until ${r.until}${r.token ? `\n${r.header}: ${r.token}` : ''}`
+          : `no pass on this account (buy one at ${client.base}/crawl or redeem a code)`,
+      );
+    }
+    case 'invites': {
+      const [sub = 'list', ...more] = rest;
+      if (sub === 'list') {
+        const r = await client.get('/api/v1/invites');
+        if (flags.json) return json(r);
+        say(`${r.quota.left} of ${r.quota.total} invites left; ${r.bonus_days} pass days each`);
+        if (!r.can_send) say(r.why_not);
+        for (const i of r.invites) say(`${i.id}  ${i.status}  ${i.note}`);
+        return say(`your link: ${r.affiliate.url}`);
+      }
+      if (sub === 'create') {
+        const r = await client.post('/api/v1/invites', { note: more.join(' ') });
+        return flags.json ? json(r) : say(r.invite.url);
+      }
+      if (sub === 'revoke') {
+        await client.post(`/api/v1/invites/${encodeURIComponent(more[0] ?? '')}/revoke`);
+        return say('withdrawn');
+      }
+      throw new Error('usage: r4ck invites [list|create [note]|revoke <id>]');
     }
     case 'open': {
       if (/^\d+$/.test(rest[0] ?? '')) return say(`${client.base}/servers/${rest[0]}`);

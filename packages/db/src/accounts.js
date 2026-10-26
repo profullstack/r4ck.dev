@@ -31,10 +31,16 @@ export async function countUsers() {
  * the token because the account row does not exist until the link is spent.
  * Bound as text and cast via ::text: Bun SQL binds a bare `::jsonb` string as a JSON string scalar.
  */
-export async function insertLoginToken({ tokenHash, email, expiresAt, profile = null }) {
+export async function insertLoginToken({
+  tokenHash,
+  email,
+  expiresAt,
+  profile = null,
+  inviteCode = null,
+}) {
   await sql`
-    insert into login_tokens (token_hash, email, expires_at, profile)
-    values (${tokenHash}, ${email}, ${expiresAt}, ${profile ? JSON.stringify(profile) : null}::text::jsonb)
+    insert into login_tokens (token_hash, email, expires_at, profile, invite_code)
+    values (${tokenHash}, ${email}, ${expiresAt}, ${profile ? JSON.stringify(profile) : null}::text::jsonb, ${inviteCode})
   `;
 }
 
@@ -187,8 +193,105 @@ export async function recordCrawlSale(sale) {
   `;
 }
 
+/** Sold passes only: a granted one (a code, an invite bonus) is not a sale. */
 export async function crawlSalesSummary() {
   const [row] =
-    await sql`select count(*)::int as sales, coalesce(sum(total_cents), 0)::int as cents from crawl_sales`;
+    await sql`select count(*)::int as sales, coalesce(sum(total_cents), 0)::int as cents from crawl_sales where user_id is null`;
   return row;
+}
+
+/* ------------------------------------------------------- account passes -- */
+
+/**
+ * Add `days` of pass to an account: a $0 crawl_sales row with the account as
+ * owner, starting when the account's running pass ends (or now). Idempotent on
+ * `ref`: the same grant twice is one term. Serialised per account by an
+ * advisory lock, so two grants at once stack instead of overlapping.
+ * Resolves to the row written, or null when `ref` was already granted.
+ */
+export async function grantPassDays({ userId, days, ref, source = 'grant', passMinutes = 1440 }) {
+  const d = Math.trunc(Number(days));
+  if (!userId) throw new Error('a pass grant needs an account');
+  if (!Number.isFinite(d) || d <= 0)
+    throw new Error('a pass grant needs a positive number of days');
+  if (!ref) throw new Error('a pass grant needs a ref');
+  const minutes = d * Math.max(1, Math.trunc(passMinutes));
+  return sql.begin(async (tx) => {
+    await tx`select pg_advisory_xact_lock(hashtext('r4ck_pass'), hashtext(${String(userId)}))`;
+    const [row] = await tx`
+      insert into crawl_sales (payer, ref, days, price_cents, total_cents, currency, user_agent, expires_at, user_id, source)
+      select null, ${ref}, ${d}, 0, 0, 'USD', null,
+             s.start_at + make_interval(mins => ${minutes}::int),
+             ${userId}::uuid, ${source}
+      from (
+        select greatest(now(), coalesce(max(expires_at), now())) as start_at
+        from crawl_sales where user_id = ${userId}::uuid
+      ) s
+      on conflict (ref) do nothing
+      returning id, ref, days, expires_at, source
+    `;
+    return row ?? null;
+  });
+}
+
+/** When the account's pass runs out, or null when it holds none that is live. */
+export async function accountPassUntil(userId) {
+  if (!/^[0-9a-f-]{36}$/i.test(String(userId))) return null;
+  const [row] = await sql`
+    select max(expires_at) as until from crawl_sales
+    where user_id = ${userId}::uuid and expires_at > now()
+  `;
+  return row?.until ? new Date(row.until) : null;
+}
+
+/** The account's pass grants, newest first. */
+export async function accountPassGrants(userId) {
+  return sql`
+    select ref, days, source, expires_at, created_at from crawl_sales
+    where user_id = ${userId}::uuid order by created_at desc limit 50
+  `;
+}
+
+/* -------------------------------------------------------------- invites -- */
+
+/** The invite a sign-in link carries, read when the link is spent. */
+export async function loginTokenInvite(tokenHash) {
+  const [row] = await sql`select invite_code from login_tokens where token_hash = ${tokenHash}`;
+  return row?.invite_code ?? null;
+}
+
+export async function recordInviteOrigin({ inviteId, ipHash }) {
+  await sql`
+    insert into invite_origins (invite_id, ip_hash) values (${inviteId}, ${ipHash ?? null})
+    on conflict (invite_id) do nothing
+  `;
+}
+
+export async function inviteOrigin(inviteId) {
+  const [row] = await sql`select ip_hash from invite_origins where invite_id = ${inviteId}`;
+  return row?.ip_hash ?? null;
+}
+
+/**
+ * Record one side's bonus decision. False when that side of that invite was
+ * already decided (the primary key), so a caller pays only on true.
+ */
+export async function decideInviteBonus({ inviteId, side, userId, days, paid, reason = null }) {
+  const rows = await sql`
+    insert into invite_bonuses (invite_id, side, user_id, days, paid, reason)
+    values (${inviteId}, ${side}, ${userId}::uuid, ${Math.trunc(days)}, ${paid}, ${reason})
+    on conflict (invite_id, side) do nothing
+    returning invite_id
+  `;
+  return rows.length > 0;
+}
+
+/** Inviter bonuses paid to an account in the last `days` days: the monthly cap. */
+export async function inviterBonusesSince(userId, days = 30) {
+  const [row] = await sql`
+    select count(*)::int as n from invite_bonuses
+    where user_id = ${userId}::uuid and side = 'inviter' and paid
+      and created_at > now() - make_interval(days => ${Math.trunc(days)}::int)
+  `;
+  return row?.n ?? 0;
 }

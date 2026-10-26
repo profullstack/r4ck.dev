@@ -3,12 +3,23 @@ import * as auth from '@r4ck/auth';
 import { config } from '@r4ck/config';
 import * as accounts from '@r4ck/db/accounts';
 import { getCookie, setCookie } from 'hono/cookie';
+import { acceptInvite, attributeReferral, looksLikeInvite } from '../lib/credits.js';
+import { callerAddress } from '../lib/gate.js';
 import { render, requireUser, respond } from '../lib/http.js';
 import { sendLoginLink } from '../lib/mail.js';
 import { profiles } from '../lib/profile.js';
 import { SignIn } from '../views/account.jsx';
 
 const PK_COOKIE = 'r4k_pk';
+/** Set by /i/<code>; also carried on the emailed link (login_tokens.invite_code). */
+export const INVITE_COOKIE = 'r4k_invite';
+/** @profullstack/affiliates' REF_COOKIE: set from ?ref= on any page. */
+export const REF_COOKIE = 'referral_code';
+const inviteFrom = (c) => {
+  const v = getCookie(c, INVITE_COOKIE);
+  return v && looksLikeInvite(v) ? v : null;
+};
+const clearCookie = (c, name) => setCookie(c, name, '', { path: '/', maxAge: 0 });
 
 export function registerAuth(app) {
   app.get('/login', async (c) => {
@@ -19,7 +30,9 @@ export function registerAuth(app) {
   });
   app.get('/signup', async (c) => {
     if (c.get('user')) return c.redirect('/settings', 303);
-    return c.html(await render(<SignIn mode="signup" next={c.req.query('next')} />));
+    return c.html(
+      await render(<SignIn mode="signup" next={c.req.query('next')} invite={inviteFrom(c)} />),
+    );
   });
 
   /** Request a link. The answer is identical whether or not the address exists. */
@@ -40,7 +53,13 @@ export function registerAuth(app) {
         if (json) return c.json({ error: 'Some fields need fixing.', errors: check.errors }, 400);
         return c.html(
           await render(
-            <SignIn mode="signup" next={body.next} values={body} errors={check.errors} />,
+            <SignIn
+              mode="signup"
+              next={body.next}
+              values={body}
+              errors={check.errors}
+              invite={looksLikeInvite(body.invite) ? String(body.invite) : inviteFrom(c)}
+            />,
           ),
           400,
         );
@@ -52,15 +71,16 @@ export function registerAuth(app) {
       .trim()
       .toLowerCase();
     const next = String(body.next ?? '/settings');
+    const invite = looksLikeInvite(body.invite) ? String(body.invite) : inviteFrom(c);
     if (/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
       try {
-        const url = await auth.createLoginLink(email, { next, profile });
+        const url = await auth.createLoginLink(email, { next, profile, invite });
         await sendLoginLink({ email, url });
       } catch (err) {
         console.error('[auth] link send failed:', err.message);
         if (!config.mail.enabled)
           console.log(
-            `[auth] mail is not configured; the link would have been ${await auth.createLoginLink(email, { next, profile })}`,
+            `[auth] mail is not configured; the link would have been ${await auth.createLoginLink(email, { next, profile, invite })}`,
           );
       }
     }
@@ -90,7 +110,25 @@ export function registerAuth(app) {
         email: result.user.email,
       }).catch((err) => console.error('[auth] signup profile save failed:', err.message));
     }
-    c.header('set-cookie', auth.sessionCookie(result.sessionId));
+    if (result.user?.created) {
+      // An affiliate link (?ref=) seen before sign-up: first touch, new accounts only.
+      const ref = getCookie(c, REF_COOKIE);
+      if (ref)
+        await attributeReferral({ userId: result.user.id, code: ref }).catch((err) =>
+          console.error('[auth] attribution failed:', err.message),
+        );
+      // An invite counts only for an account this link just created: spending
+      // the link proved the mailbox. The code comes from the link itself first,
+      // so a link opened in another browser still counts.
+      const invite = result.invite ?? inviteFrom(c);
+      if (invite)
+        await acceptInvite({ user: result.user, code: invite, ip: callerAddress(c) }).catch((err) =>
+          console.error('[auth] invite accept failed:', err.message),
+        );
+    }
+    if (getCookie(c, REF_COOKIE)) clearCookie(c, REF_COOKIE);
+    if (getCookie(c, INVITE_COOKIE)) clearCookie(c, INVITE_COOKIE);
+    c.header('set-cookie', auth.sessionCookie(result.sessionId), { append: true });
     const next = c.req.query('next');
     return c.redirect(next?.startsWith('/') ? next : '/settings', 303);
   });
