@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { gate } from './lib/gate.js';
-import { FOOTER_SCRIPT_SRC } from './lib/pfs-footer.js';
 import { Denied, loadUser, render, wantsJson } from './lib/http.js';
+import { FOOTER_SCRIPT_SRC } from './lib/pfs-footer.js';
 import { registerApi } from './routes/api.js';
 import { registerAuth } from './routes/auth.js';
 import { registerCredits, rememberRef } from './routes/credits.js';
