@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import { gate } from './lib/gate.js';
+import { FOOTER_SCRIPT_SRC } from './lib/pfs-footer.js';
 import { Denied, loadUser, render, wantsJson } from './lib/http.js';
 import { registerApi } from './routes/api.js';
 import { registerAuth } from './routes/auth.js';
@@ -18,7 +19,7 @@ app.use('*', async (c, next) => {
   if (!c.req.path.startsWith('/api/') && c.req.path !== '/mcp')
     c.header(
       'content-security-policy',
-      "default-src 'self'; img-src 'self' https: data:; style-src 'self' 'unsafe-inline'; script-src 'self' https://crawlproof.com; font-src 'self'; connect-src 'self' https://crawlproof.com; frame-src https://crawlproof.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'",
+      `default-src 'self'; img-src 'self' https: data:; style-src 'self' 'unsafe-inline'; script-src 'self' https://crawlproof.com ${FOOTER_SCRIPT_SRC}; font-src 'self'; connect-src 'self' https://crawlproof.com https://pit.world; frame-src https://crawlproof.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self' https://pit.world`,
     );
   await next();
 });
