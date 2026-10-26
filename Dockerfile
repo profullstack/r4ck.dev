@@ -1,4 +1,4 @@
-FROM oven/bun:1.4.0-slim AS deps
+FROM oven/bun:1.4.4-slim AS deps
 WORKDIR /app
 COPY package.json bun.lock* bunfig.toml ./
 COPY apps/web/package.json apps/web/package.json
@@ -11,7 +11,7 @@ COPY packages/db/package.json packages/db/package.json
 COPY packages/sync/package.json packages/sync/package.json
 RUN bun install --frozen-lockfile --ignore-scripts || bun install --ignore-scripts
 
-FROM oven/bun:1.4.0-slim AS runtime
+FROM oven/bun:1.4.4-slim AS runtime
 WORKDIR /app
 ENV NODE_ENV=production
 COPY --from=deps /app /app
