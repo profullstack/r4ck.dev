@@ -375,6 +375,105 @@ if (!url) {
         ).status,
       ).toBe(400);
     });
+    test('signup asks for the profile fields; sign-in does not', async () => {
+      const signup = await (
+        await app.request('/signup', { headers: { accept: 'text/html' } })
+      ).text();
+      for (const name of ['first_name', 'last_name', 'company_domain', 'job_title', 'linkedin_url'])
+        expect(signup).toContain(`name="${name}"`);
+      expect(signup.match(/name="email"/g)?.length).toBe(1);
+      expect(signup).toContain('/vendor-profile.js');
+      const login = await (
+        await app.request('/login', { headers: { accept: 'text/html' } })
+      ).text();
+      expect(login).not.toContain('name="first_name"');
+      const script = await app.request('/vendor-profile.js');
+      expect(script.headers.get('content-type')).toContain('javascript');
+    });
+    test('a signup with the fields stores them on verify', async () => {
+      const post = (fields) =>
+        app.request('/api/auth/magic', {
+          method: 'POST',
+          headers: { accept: 'text/html', 'content-type': 'application/x-www-form-urlencoded' },
+          body: new URLSearchParams({ mode: 'signup', next: '/settings', ...fields }),
+        });
+      await sql`delete from login_tokens where email = 'ada@acme.test'`;
+      await sql`delete from users where email = 'ada@acme.test'`;
+      // Refused before any link exists, with what was typed kept.
+      const refused = await post({ email: 'ada@acme.test', first_name: 'Ada' });
+      expect(refused.status).toBe(400);
+      const page = await refused.text();
+      expect(page).toContain('value="Ada"');
+      expect(page).toContain('name="last_name"');
+      expect((await sql`select 1 from login_tokens where email = 'ada@acme.test'`).length).toBe(0);
+
+      const ok = await post({
+        email: 'Ada@Acme.test',
+        first_name: 'Ada',
+        last_name: 'Lovelace',
+        company_domain: 'https://www.acme.test/about',
+        job_title: 'VP Engineering',
+        linkedin_url: 'in/ada-lovelace',
+      });
+      expect(ok.status).toBe(200);
+      // Carried on the token, normalized, as a jsonb object (not a JSON string).
+      const [row] = await sql`
+        select profile, jsonb_typeof(profile) as t from login_tokens
+        where email = 'ada@acme.test' and profile is not null limit 1
+      `;
+      expect(row.t).toBe('object');
+      // The emailed URL is not readable here, so a link is minted with the same
+      // carried fields; spending it must save them.
+      const carried = typeof row.profile === 'string' ? JSON.parse(row.profile) : row.profile;
+      const link = await auth.createLoginLink('ada@acme.test', { profile: carried });
+      const r = await app.request(link.replace(/^https?:\/\/[^/]+/, ''), {
+        headers: { accept: 'text/html' },
+      });
+      expect(r.status).toBe(303);
+      const cookie = r.headers.get('set-cookie').split(';')[0];
+      const got = await app.request('/api/v1/me/profile', {
+        headers: { accept: 'application/json', cookie },
+      });
+      expect(got.status).toBe(200);
+      expect(JSON.stringify(await got.json())).toContain('"company_domain":"acme.test"');
+      const [saved] = await sql`
+        select p.* from user_profiles p join users u on u.id = p.user_id
+        where u.email = 'ada@acme.test'
+      `;
+      expect(saved).toMatchObject({
+        email: 'ada@acme.test',
+        first_name: 'Ada',
+        last_name: 'Lovelace',
+        company_domain: 'acme.test',
+        job_title: 'VP Engineering',
+        linkedin_url: 'https://www.linkedin.com/in/ada-lovelace',
+      });
+      // Settings shows the same fields, prefilled, and saves them without script.
+      const settings = await app.request('/settings', { headers: { accept: 'text/html', cookie } });
+      expect(await settings.text()).toContain('value="VP Engineering"');
+      const edit = await app.request('/settings/contact', {
+        method: 'POST',
+        headers: {
+          accept: 'text/html',
+          cookie,
+          'content-type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({ first_name: 'Ada', last_name: 'King', job_title: 'CTO' }),
+      });
+      expect(edit.status).toBe(303);
+      const [edited] = await sql`
+        select p.last_name, p.job_title from user_profiles p join users u on u.id = p.user_id
+        where u.email = 'ada@acme.test'
+      `;
+      expect(edited).toEqual({ last_name: 'King', job_title: 'CTO' });
+      // Handed out once: the spent token no longer holds it.
+      const spent = await sql`
+        select 1 from login_tokens
+        where email = 'ada@acme.test' and consumed_at is not null and profile is not null
+      `;
+      expect(spent.length).toBe(0);
+      expect((await app.request('/api/v1/me/profile')).status).toBe(401);
+    });
   });
 
   describe('mcp', () => {

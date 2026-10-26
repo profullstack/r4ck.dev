@@ -1,14 +1,32 @@
+import { COLUMNS as PROFILE_COLUMNS, renderProfileFields } from '@profullstack/profile';
 import { config } from '@r4ck/config';
+import { raw } from 'hono/html';
 import { ago } from './home.jsx';
 import { Layout } from './Layout.jsx';
 
-export function SignIn({ mode = 'login', next, sent = false, error, user = null }) {
+/*
+ * The rest of the shared profile (@profullstack/profile), asked for on the signup
+ * page only. Email is the form's own box, so the package renders the other five.
+ * A plain sign-in never sees or needs them.
+ */
+const PROFILE_FIELDS = PROFILE_COLUMNS.filter((f) => f !== 'email');
+
+export function SignIn({
+  mode = 'login',
+  next,
+  sent = false,
+  error,
+  user = null,
+  values = null,
+  errors = null,
+}) {
   const signup = mode === 'signup';
   return (
     <Layout
       user={user}
       path={signup ? '/signup' : '/login'}
       title={signup ? 'Create an account' : 'Sign in'}
+      head={signup ? <script src="/vendor-profile.js" defer></script> : null}
     >
       <section class="auth">
         <h1>{signup ? 'Create an account' : 'Sign in'}</h1>
@@ -27,6 +45,7 @@ export function SignIn({ mode = 'login', next, sent = false, error, user = null 
           <>
             <form method="post" action="/api/auth/magic" class="stack">
               <input type="hidden" name="next" value={next ?? '/settings'} />
+              {signup ? <input type="hidden" name="mode" value="signup" /> : null}
               <label>
                 Email
                 <input
@@ -35,8 +54,19 @@ export function SignIn({ mode = 'login', next, sent = false, error, user = null 
                   required
                   autocomplete="email"
                   placeholder="you@example.com"
+                  value={values?.email ?? undefined}
                 />
               </label>
+              {errors?.email ? <p class="pfs-profile__error">{errors.email}</p> : null}
+              {signup
+                ? raw(
+                    renderProfileFields({
+                      fields: PROFILE_FIELDS,
+                      values: values ?? {},
+                      errors: errors ?? {},
+                    }),
+                  )
+                : null}
               <button class="button primary" type="submit">
                 {signup ? 'Send me a link' : 'Email me a link'}
               </button>
@@ -68,7 +98,7 @@ export function SignIn({ mode = 'login', next, sent = false, error, user = null 
   );
 }
 
-export function Settings({ user, keys, passkeys, saved, freshKey, notice, error }) {
+export function Settings({ user, keys, passkeys, saved, contact = null, freshKey, notice, error }) {
   return (
     <Layout user={user} path="/settings" title="Settings">
       <header class="page-head">
@@ -181,6 +211,19 @@ export function Settings({ user, keys, passkeys, saved, freshKey, notice, error 
           </p>
         </section>
       </div>
+      <section class="panel" id="contact">
+        <h2>Contact details</h2>
+        <p class="muted small">
+          Private to your account. Sent with <code>{user.email}</code>. Also at{' '}
+          <code>/api/v1/me/profile</code>.
+        </p>
+        <form method="post" action="/settings/contact" class="stack">
+          {raw(renderProfileFields({ fields: PROFILE_FIELDS, values: contact ?? {} }))}
+          <button class="button primary small" type="submit">
+            Save contact details
+          </button>
+        </form>
+      </section>
       <section class="panel">
         <h2>Saved searches</h2>
         {saved.length ? (

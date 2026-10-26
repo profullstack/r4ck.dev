@@ -1,8 +1,10 @@
+import { validateProfile } from '@profullstack/profile';
 import * as auth from '@r4ck/auth';
 import { config } from '@r4ck/config';
 import * as accounts from '@r4ck/db/accounts';
 import { accessFor } from '../lib/gate.js';
 import { Denied, notice, render, requireUser, respond, wantsJson } from '../lib/http.js';
+import { profiles } from '../lib/profile.js';
 import * as svc from '../lib/service.js';
 import { Settings } from '../views/account.jsx';
 import { Deals } from '../views/deals.jsx';
@@ -105,10 +107,11 @@ export function registerPages(app) {
   /* ------------------------------------------------------------ account -- */
   app.get('/settings', async (c) => {
     const user = requireUser(c);
-    const [keys, passkeys, saved] = await Promise.all([
+    const [keys, passkeys, saved, contact] = await Promise.all([
       auth.listApiKeys(user.id),
       accounts.listPasskeys(user.id),
       svc.listSaved(user),
+      profiles.get(user.id),
     ]);
     return c.html(
       await render(
@@ -117,11 +120,33 @@ export function registerPages(app) {
           keys={keys}
           passkeys={passkeys}
           saved={saved.saved}
+          contact={contact ?? { email: user.email }}
           freshKey={c.req.query('key')}
           {...notice(c)}
         />,
       ),
     );
+  });
+  // The shared profile (names, company, title, LinkedIn), for a page without
+  // script; /api/v1/me/profile is the same thing for API callers. Not under
+  // /api/, where every answer is JSON, so a plain form post gets its redirect.
+  app.post('/settings/contact', async (c) => {
+    const user = requireUser(c);
+    const body = await c.req.parseBody();
+    const check = validateProfile({ ...body, email: user.email });
+    if (!check.ok)
+      return respond(c, {
+        json: { error: 'Some fields need fixing.', errors: check.errors },
+        status: 400,
+        redirectTo: '/settings',
+        error: Object.values(check.errors)[0],
+      });
+    const profile = await profiles.save(user.id, check.profile);
+    return respond(c, {
+      json: { profile },
+      redirectTo: '/settings',
+      notice: 'Contact details saved.',
+    });
   });
   app.post('/api/keys', async (c) => {
     const user = requireUser(c);
@@ -159,6 +184,7 @@ export function registerPages(app) {
     const user = requireUser(c);
     const { sql } = await import('@r4ck/db');
     await sql`delete from users where id = ${user.id}`;
+    await profiles.remove(user.id);
     c.header('set-cookie', auth.sessionCookie('', { clear: true }));
     return respond(c, { redirectTo: '/', notice: 'Account deleted.' });
   });

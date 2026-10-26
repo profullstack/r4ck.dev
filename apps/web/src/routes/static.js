@@ -1,4 +1,5 @@
 import { join } from 'node:path';
+import { PROFILE_ENHANCE_SCRIPT } from '@profullstack/profile';
 import { config } from '@r4ck/config';
 import { sql } from '@r4ck/db';
 import { assetVersion, PUBLIC } from '../lib/assets.js';
@@ -49,6 +50,14 @@ export function registerStatic(app) {
     /^[\w.-]+\.(png|svg)$/.test(c.req.param('file'))
       ? serve(c, `icons/${c.req.param('file')}`, { cache: 'public, max-age=86400' })
       : c.notFound(),
+  );
+  // The signup form's company-from-work-email helper, from @profullstack/profile.
+  // Served as a file because the policy allows no inline script.
+  app.get('/vendor-profile.js', (c) =>
+    c.body(PROFILE_ENHANCE_SCRIPT, 200, {
+      'content-type': TYPES.js,
+      'cache-control': 'public, max-age=3600',
+    }),
   );
   app.get('/sw.js', (c) => serve(c, 'sw.js', { cache: 'no-cache' }));
   // curl -fsSL https://r4ck.dev/install.sh | sh

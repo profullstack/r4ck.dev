@@ -454,6 +454,7 @@ button.button {
 input[type="search"],
 input[type="text"],
 input[type="email"],
+input[type="url"],
 select {
   height: var(--control-h);
   border-radius: 10px;
@@ -494,6 +495,34 @@ label {
   display: grid;
   gap: 0.75rem;
   margin-bottom: 1rem;
+}
+/* The shared profile fields (@profullstack/profile renderProfileFields): a bare
+   fieldset of label + input rows, made to read like the email box above them. */
+.pfs-profile {
+  display: grid;
+  gap: 0.75rem;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+.pfs-profile__row {
+  display: grid;
+  gap: 0.35rem;
+}
+.pfs-profile__row label {
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+.pfs-profile__optional {
+  color: var(--muted);
+  font-weight: 400;
+  font-size: 0.8rem;
+}
+.pfs-profile__error {
+  color: var(--err);
+  font-size: 0.85rem;
+  margin: 0;
 }
 .inline-form {
   display: flex;
