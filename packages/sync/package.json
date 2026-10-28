@@ -10,7 +10,7 @@
     "./daemon": "./src/daemon.js"
   },
   "dependencies": {
-    "@profullstack/scraper-daemon": "0.2.1",
+    "@profullstack/scraper-daemon": "0.2.2",
     "@r4ck/config": "workspace:*",
     "@r4ck/core": "workspace:*",
     "@r4ck/db": "workspace:*",
