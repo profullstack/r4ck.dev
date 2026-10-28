@@ -30,7 +30,7 @@ export function respond(c, { json, redirectTo, status, notice, error } = {}) {
   const to = new URL(redirectTo ?? c.req.header('referer') ?? '/', config.siteUrl);
   if (notice) to.searchParams.set('notice', notice);
   if (error) to.searchParams.set('error', error);
-  return c.redirect(to.pathname + to.search, 303);
+  return c.redirect(to.pathname + to.search + to.hash, 303);
 }
 
 export function requireUser(c) {

@@ -46,6 +46,7 @@
         "@profullstack/r4ck": "workspace:*",
         "@profullstack/redeem-credits": "0.2.0",
         "@profullstack/throttle": "^0.4.0",
+        "@profullstack/webhooks": "0.2.1",
         "@profullstack/x402-gateway": "^0.13.1",
         "@r4ck/auth": "workspace:*",
         "@r4ck/config": "workspace:*",
@@ -217,6 +218,8 @@
     "@profullstack/scraper-daemon": ["@profullstack/scraper-daemon@0.2.1", "", { "peerDependencies": { "bullmq": ">=6", "ioredis": ">=5" }, "optionalPeers": ["bullmq", "ioredis"], "bin": { "scraper-daemon": "bin/scraper-daemon.js" } }, "sha512-oqmN0eOPmNAz7Q88XOIL2xEb87jc32IbIWyteUtmIhqqLHHQhu19lsgrrtoNClH/6tQoI7cSQFCAnoFH1YoNXw=="],
 
     "@profullstack/throttle": ["@profullstack/throttle@0.4.0", "", { "dependencies": { "@profullstack/x402-gateway": "^0.6.0 || ^0.7.0 || ^0.8.0 || ^0.9.0 || ^0.10.0 || ^0.11.0 || ^0.12.0 || ^0.13.0 || ^0.14.0 || ^0.15.0" } }, "sha512-Lj+XHt51OxyaJ2FqosZDyr9Z5RFB8z+ARixpoUfrDu3YlvFlct5GbbZM/C0qLZkUgzeuFSDvtYt9f0NNfBkFqA=="],
+
+    "@profullstack/webhooks": ["@profullstack/webhooks@0.2.1", "", {}, "sha512-QHeSkpu4O44oJ620qhQqxqFlD3u/OhupmXRnBHw4MGKuDTa0R+Y/727nnF7psSHxxSfnbWfNuVl15z3IXuaZiw=="],
 
     "@profullstack/x402-gateway": ["@profullstack/x402-gateway@0.13.1", "", { "dependencies": { "@profullstack/keys": "^0.1.0" } }, "sha512-V7liSO0tShZRlp8dancuDuUSF/rqrr5YF3bzLoZy9wn6ixf1RIRPYTepe72s36JOdSVzi3wfuhaZFm9y0RpV4w=="],
 

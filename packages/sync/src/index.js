@@ -64,7 +64,7 @@ export async function refreshRates({ log = console.log } = {}) {
  */
 export async function applyItems(
   items,
-  { rates, log = () => {}, counts = freshCounts(), watermark = null } = {},
+  { rates, log = () => {}, counts = freshCounts(), watermark = null, changes = null } = {},
 ) {
   const pending = [];
   for (const item of items) {
@@ -87,6 +87,13 @@ export async function applyItems(
       counts.servers++;
       if (r.created) counts.created++;
       if (r.priceChanged) counts.priceChanges++;
+      if (changes && r.created) changes.listed.push(r.id);
+      if (changes && r.priceDropped)
+        changes.dropped.push({
+          id: r.id,
+          from: r.previous,
+          to: { price: s.price, currency: s.currency },
+        });
     } else if (item.kind === 'deal' || item.kind === 'story') {
       await cat.upsertDeal({
         ...itemToDeal(item),
@@ -157,7 +164,21 @@ export async function syncTick({
   budgetMs = 8 * 60_000,
   walkEveryMs = 24 * 3600_000,
   now = Date.now,
+  onChanges = null,
 } = {}) {
+  // What this tick listed and cut, for the watchers (webhooks on saved searches).
+  const changes = { listed: [], dropped: [] };
+  try {
+    return await tick({ log, client, budgetMs, walkEveryMs, now, changes });
+  } finally {
+    if (onChanges && (changes.listed.length || changes.dropped.length))
+      await Promise.resolve(onChanges(changes)).catch((err) =>
+        log(`[sync] change listener failed: ${err?.message ?? err}`),
+      );
+  }
+}
+
+async function tick({ log, client, budgetMs, walkEveryMs, now, changes }) {
   const started = now();
   const state = (await cat.getSyncState('nichedb')) ?? {};
   const rates = await currentRates();
@@ -175,7 +196,7 @@ export async function syncTick({
   try {
     const recent = await client.recent();
     counts.pages++;
-    ({ counts, watermark } = await applyItems(recent, { rates, counts, watermark }));
+    ({ counts, watermark } = await applyItems(recent, { rates, counts, watermark, changes }));
     log(
       `[sync] recent: ${recent.length} rows, ${counts.created} new, ${counts.priceChanges} price changes`,
     );
@@ -206,7 +227,7 @@ export async function syncTick({
       exhausted = true;
       break;
     }
-    ({ counts, watermark } = await applyItems(page, { rates, counts, watermark }));
+    ({ counts, watermark } = await applyItems(page, { rates, counts, watermark, changes }));
     seen += page.length;
     before = Math.min(...page.map((i) => Number(i.id)));
     log(`[sync] walk: ${seen} rows so far (before ${before})`);

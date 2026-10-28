@@ -82,7 +82,9 @@ export async function upsertServer(s) {
       updated_at = excluded.updated_at, first_seen_at = coalesce(servers.first_seen_at, excluded.first_seen_at),
       synced_at = now()
     returning id, (xmax = 0) as created,
-      (select monthly_usd from price_points pp where pp.server_id = servers.id order by seen_at desc limit 1) as last_monthly
+      (select monthly_usd from price_points pp where pp.server_id = servers.id order by seen_at desc limit 1) as last_monthly,
+      (select price from price_points pp where pp.server_id = servers.id order by seen_at desc limit 1) as last_price,
+      (select currency from price_points pp where pp.server_id = servers.id order by seen_at desc limit 1) as last_currency
   `;
   const changed = row.created || Number(row.last_monthly ?? -1) !== Number(s.monthly_usd ?? -1);
   if (changed) {
@@ -92,7 +94,25 @@ export async function upsertServer(s) {
       on conflict do nothing
     `;
   }
-  return { id: row.id, created: row.created, priceChanged: !row.created && changed };
+  // The billed-in price before this sync, so a watcher hears about a real cut, not an FX wobble.
+  const lastPrice = row.last_price ?? null;
+  const lastCurrency = row.last_currency ?? null;
+  // Only when a new price point was written, or the same drop would be heard on every sync.
+  const priceDropped =
+    changed &&
+    !row.created &&
+    lastPrice !== null &&
+    s.price !== null &&
+    s.price !== undefined &&
+    lastCurrency === s.currency &&
+    Number(s.price) < Number(lastPrice);
+  return {
+    id: row.id,
+    created: row.created,
+    priceChanged: !row.created && changed,
+    priceDropped,
+    previous: priceDropped ? { price: Number(lastPrice), currency: lastCurrency } : null,
+  };
 }
 
 export async function upsertDeal(d) {

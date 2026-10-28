@@ -188,6 +188,10 @@ export function ApiDocs({ user }) {
                 'GET/POST /api/v1/saved · DELETE /api/v1/saved/:id',
                 'Saved searches. POST {name, query}.',
               ],
+              [
+                'GET/POST /api/v1/webhooks · GET/PATCH/DELETE /api/v1/webhooks/:id · POST /:id/test · POST /:id/rotate · GET /deliveries',
+                'Signed webhooks for your account (Standard Webhooks headers, CloudEvents body): server.listed and server.price_dropped for offers matching a saved search, pass.granted, api_key.created, api_key.revoked. POST {url, events?, description?} returns the secret once.',
+              ],
               ['POST /mcp', 'MCP, stateless Streamable HTTP. See /docs/mcp.'],
             ].map(([a, b]) => (
               <tr>

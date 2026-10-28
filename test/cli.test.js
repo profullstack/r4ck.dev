@@ -125,3 +125,75 @@ describe('cli run', () => {
     expect(auth).toBe('Bearer r4k_abc');
   });
 });
+
+describe('cli webhooks', () => {
+  test('add posts url + events, list and update speak /api/v1/webhooks', async () => {
+    const calls = [];
+    const fetchImpl = async (url, init) => {
+      const u = new URL(url);
+      calls.push({
+        method: init.method,
+        path: u.pathname,
+        body: init.body ? JSON.parse(init.body) : null,
+      });
+      if (init.method === 'POST' && u.pathname === '/api/v1/webhooks')
+        return new Response(
+          JSON.stringify({
+            endpoint: { id: 'wh_1', url: 'https://h.example/x' },
+            secret: 'whsec_s',
+          }),
+          { status: 201 },
+        );
+      if (init.method === 'GET' && u.pathname === '/api/v1/webhooks')
+        return new Response(
+          JSON.stringify({
+            endpoints: [
+              { id: 'wh_1', enabled: true, url: 'https://h.example/x', events: ['*'], failures: 0 },
+            ],
+            event_types: ['server.listed'],
+          }),
+        );
+      return new Response(JSON.stringify({ id: 'wh_1' }));
+    };
+    let text = '';
+    const io = {
+      stdout: { write: (s) => (text += s) },
+      stderr: { write: (s) => (text += s) },
+      fetchImpl,
+    };
+    await run(
+      [
+        'webhooks',
+        'add',
+        'https://h.example/x',
+        '--events',
+        'server.listed, pass.granted',
+        '--key',
+        'r4k_1',
+        '--api',
+        'http://x',
+      ],
+      io,
+    );
+    expect(calls[0]).toEqual({
+      method: 'POST',
+      path: '/api/v1/webhooks',
+      body: {
+        url: 'https://h.example/x',
+        events: ['server.listed', 'pass.granted'],
+        description: '',
+      },
+    });
+    expect(text).toContain('whsec_s');
+    await run(['webhooks', '--key', 'r4k_1', '--api', 'http://x'], io);
+    expect(text).toContain('wh_1  on   https://h.example/x');
+    await run(['webhooks', 'update', 'wh_1', '--off', '--key', 'r4k_1', '--api', 'http://x'], io);
+    expect(calls.at(-1)).toEqual({
+      method: 'PATCH',
+      path: '/api/v1/webhooks/wh_1',
+      body: { enabled: false },
+    });
+    await run(['webhooks', 'test', 'wh_1', '--key', 'r4k_1', '--api', 'http://x'], io);
+    expect(calls.at(-1).path).toBe('/api/v1/webhooks/wh_1/test');
+  });
+});

@@ -2,6 +2,7 @@ import { config } from '@r4ck/config';
 import { ALL_PARAMS, KINDS, SORTS } from '@r4ck/core/facets';
 import * as credits from '../credits.js';
 import * as svc from '../service.js';
+import { EVENT_TYPES, hooks, WebhookError } from '../webhooks.js';
 
 /**
  * The tools, the single source of truth for tools/list and /docs/mcp. Each
@@ -216,7 +217,134 @@ export const TOOLS = [
       return r.invite;
     },
   },
+  ...webhookTools(),
 ];
+
+/** The /api/v1/webhooks API as tools: endpoints on the caller's account. */
+function webhookTools() {
+  const ID = { type: 'string', description: 'The endpoint id (wh_…), from list_webhooks.' };
+  const EVENTS = {
+    type: 'array',
+    items: { type: 'string' },
+    description: `Event patterns ("*", an exact type or "server.*"). Types: ${EVENT_TYPES.join(', ')}.`,
+  };
+  const asOwner = (fn) => async (args, ctx) => {
+    const owner = String(needUser(ctx).id);
+    try {
+      return await fn(args, owner);
+    } catch (err) {
+      if (err instanceof WebhookError) throw toolError(err.message);
+      throw err;
+    }
+  };
+  return [
+    {
+      name: 'list_webhooks',
+      title: 'Your webhooks',
+      description:
+        'The caller’s webhook endpoints (url, event filters, on/off, failures) and the event types r4ck sends: server.listed and server.price_dropped for offers matching a saved search, pass.granted, api_key.created, api_key.revoked.',
+      key: true,
+      readOnly: true,
+      schema: { type: 'object', properties: {} },
+      run: asOwner(async (_a, owner) => ({
+        endpoints: await hooks().listEndpoints(owner),
+        event_types: EVENT_TYPES,
+      })),
+    },
+    {
+      name: 'create_webhook',
+      title: 'Add a webhook',
+      description:
+        'Register an https URL to receive the caller’s events as signed POSTs (CloudEvents body, Standard Webhooks headers). Returns the endpoint and its signing secret (whsec_…), shown once.',
+      key: true,
+      readOnly: false,
+      schema: {
+        type: 'object',
+        properties: { url: { type: 'string' }, events: EVENTS, description: { type: 'string' } },
+        required: ['url'],
+      },
+      run: asOwner((a, owner) =>
+        hooks().createEndpoint(owner, {
+          url: String(a.url ?? ''),
+          events: a.events,
+          description: String(a.description ?? ''),
+        }),
+      ),
+    },
+    {
+      name: 'update_webhook',
+      title: 'Change a webhook',
+      description:
+        'Change an endpoint’s url, events or description, or switch it on/off (switching on clears its failure count).',
+      key: true,
+      readOnly: false,
+      schema: {
+        type: 'object',
+        properties: {
+          id: ID,
+          url: { type: 'string' },
+          events: EVENTS,
+          description: { type: 'string' },
+          enabled: { type: 'boolean' },
+        },
+        required: ['id'],
+      },
+      run: asOwner((a, owner) => {
+        const { id, ...patch } = a;
+        return hooks().updateEndpoint(owner, String(id ?? ''), patch);
+      }),
+    },
+    {
+      name: 'delete_webhook',
+      title: 'Remove a webhook',
+      description: 'Delete an endpoint and its delivery log.',
+      key: true,
+      readOnly: false,
+      schema: { type: 'object', properties: { id: ID }, required: ['id'] },
+      run: asOwner((a, owner) => hooks().deleteEndpoint(owner, String(a.id ?? ''))),
+    },
+    {
+      name: 'test_webhook',
+      title: 'Send a test delivery',
+      description:
+        'Send a signed webhook.test event to the endpoint now and report the HTTP status.',
+      key: true,
+      readOnly: false,
+      schema: { type: 'object', properties: { id: ID }, required: ['id'] },
+      run: asOwner((a, owner) => hooks().test(owner, String(a.id ?? ''))),
+    },
+    {
+      name: 'rotate_webhook_secret',
+      title: 'Replace a webhook’s signing secret',
+      description: 'Mint a new signing secret and return it; the old one stops working at once.',
+      key: true,
+      readOnly: false,
+      schema: { type: 'object', properties: { id: ID }, required: ['id'] },
+      run: asOwner((a, owner) => hooks().rotateSecret(owner, String(a.id ?? ''))),
+    },
+    {
+      name: 'webhook_deliveries',
+      title: 'Webhook delivery log',
+      description:
+        'Recent deliveries (status, attempts, last HTTP status or error, payload), for one endpoint or all.',
+      key: true,
+      readOnly: true,
+      schema: {
+        type: 'object',
+        properties: {
+          id: { ...ID, description: 'Only this endpoint; omit for all.' },
+          limit: { type: 'integer', minimum: 1, maximum: 200 },
+        },
+      },
+      run: asOwner(async (a, owner) => ({
+        deliveries: await hooks().deliveries(owner, {
+          endpointId: a.id ? String(a.id) : undefined,
+          limit: Math.min(Number(a.limit) || 50, 200),
+        }),
+      })),
+    },
+  ];
+}
 
 export const TOOLS_BY_NAME = new Map(TOOLS.map((t) => [t.name, t]));
 export const OPEN_TOOLS = TOOLS.filter((t) => !t.key).map((t) => t.name);
@@ -235,9 +363,9 @@ export const describe = (t) => ({
   description: t.description,
   inputSchema: t.schema,
   annotations: {
-    readOnlyHint: !['save_search', 'delete_saved_search', 'redeem_code', 'create_invite'].includes(
-      t.name,
-    ),
+    readOnlyHint:
+      t.readOnly ??
+      !['save_search', 'delete_saved_search', 'redeem_code', 'create_invite'].includes(t.name),
     openWorldHint: false,
   },
 });

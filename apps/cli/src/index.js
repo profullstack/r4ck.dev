@@ -9,7 +9,7 @@ import { createInterface } from 'node:readline';
  * reply verbatim, otherwise a table a person can read. `r4ck mcp` bridges
  * stdio to the site's MCP endpoint so any client gets every tool.
  */
-export const VERSION = '0.2.0';
+export const VERSION = '0.3.0';
 const DEFAULT_API = process.env.R4CK_API ?? 'https://r4ck.dev';
 const CONFIG_DIR = join(process.env.XDG_CONFIG_HOME ?? join(homedir(), '.config'), 'r4ck');
 const CONFIG_FILE = join(CONFIG_DIR, 'config.json');
@@ -64,6 +64,12 @@ export const COMMANDS = [
     name: 'invites',
     usage: 'invites [list|create [note]|revoke <id>]',
     help: 'Your scarce invites (both sides get pass days) and your link.',
+  },
+  {
+    name: 'webhooks',
+    usage:
+      'webhooks [list|add <url> [--events a,b] [--description d]|update <id> [--url u] [--events a,b] [--on|--off]|rm <id>|test <id>|rotate <id>|secret <id>|deliveries [id]|retry <delivery>]',
+    help: 'Signed webhooks for your account: offers matching a saved search, price drops, pass and key changes.',
   },
   {
     name: 'open',
@@ -487,6 +493,93 @@ export async function run(
         return say('withdrawn');
       }
       throw new Error('usage: r4ck invites [list|create [note]|revoke <id>]');
+    }
+    case 'webhook':
+    case 'webhooks': {
+      const [sub = 'list', id, ...more] = rest;
+      const root = '/api/v1/webhooks';
+      const at = (suffix = '') => {
+        if (!id) throw new Error(`usage: r4ck webhooks ${sub} <id>  (r4ck webhooks lists them)`);
+        return `${root}/${encodeURIComponent(id)}${suffix}`;
+      };
+      const events = () =>
+        typeof flags.events === 'string'
+          ? flags.events
+              .split(',')
+              .map((x) => x.trim())
+              .filter(Boolean)
+          : undefined;
+      const out = (r, line) => (flags.json ? json(r) : say(line(r)));
+      switch (sub) {
+        case 'list':
+        case 'ls':
+          return out(await client.get(root), (r) =>
+            [
+              ...(r.endpoints.length
+                ? r.endpoints.map(
+                    (e) =>
+                      `${e.id}  ${e.enabled ? 'on ' : 'off'}  ${e.url}  [${e.events.join(',')}]${e.failures ? `  ${e.failures} failures` : ''}`,
+                  )
+                : ['no webhooks yet']),
+              `events: ${(r.event_types ?? []).join(', ')}`,
+            ].join('\n'),
+          );
+        case 'add': {
+          if (!id) throw new Error('usage: r4ck webhooks add <https url> [--events a,b]');
+          const r = await client.post(root, {
+            url: id,
+            events: events(),
+            description: typeof flags.description === 'string' ? flags.description : more.join(' '),
+          });
+          return out(
+            r,
+            (x) => `${x.endpoint.id}  ${x.endpoint.url}\nsigning secret (shown once): ${x.secret}`,
+          );
+        }
+        case 'update': {
+          const patch = {};
+          if (typeof flags.url === 'string') patch.url = flags.url;
+          if (events()) patch.events = events();
+          if (typeof flags.description === 'string') patch.description = flags.description;
+          if (flags.on === true) patch.enabled = true;
+          if (flags.off === true) patch.enabled = false;
+          const r = await client.send('PATCH', at(), patch);
+          return out(r, (x) => `${x.id ?? id} updated`);
+        }
+        case 'rm':
+        case 'remove':
+          await client.del(at());
+          return say('removed');
+        case 'test':
+          return out(await client.post(at('/test')), (r) =>
+            r.ok ? `delivered (HTTP ${r.status})` : `failed: ${r.status ?? r.error}`,
+          );
+        case 'rotate':
+          return out(await client.post(at('/rotate')), (r) => `new signing secret: ${r.secret}`);
+        case 'secret':
+          return out(await client.get(at('/secret')), (r) => r.secret);
+        case 'deliveries': {
+          const r = await client.get(id ? at('/deliveries') : `${root}/deliveries`);
+          return out(r, (x) =>
+            (x.deliveries ?? []).length
+              ? x.deliveries
+                  .map(
+                    (d) =>
+                      `${d.id}  ${d.event_type}  ${d.status}  ${d.attempts}x${d.last_status ? `  HTTP ${d.last_status}` : ''}${d.last_error ? `  ${d.last_error}` : ''}`,
+                  )
+                  .join('\n')
+              : 'no deliveries yet',
+          );
+        }
+        case 'retry':
+          if (!id) throw new Error('usage: r4ck webhooks retry <delivery id>');
+          return out(
+            await client.post(`${root}/deliveries/${encodeURIComponent(id)}/retry`),
+            (d) => `${d.id ?? id} queued again`,
+          );
+        default:
+          throw new Error(`webhooks: unknown subcommand ${sub}`);
+      }
     }
     case 'open': {
       if (/^\d+$/.test(rest[0] ?? '')) return say(`${client.base}/servers/${rest[0]}`);

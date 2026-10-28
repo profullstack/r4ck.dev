@@ -4,6 +4,7 @@ import { raw } from 'hono/html';
 import { CodesPanel, PassPanel } from './credits.jsx';
 import { ago } from './home.jsx';
 import { Layout } from './Layout.jsx';
+import { WebhooksPanel } from './webhooks.jsx';
 
 /*
  * The rest of the shared profile (@profullstack/profile), asked for on the signup
@@ -119,6 +120,7 @@ export function Settings({
   pass = null,
   codes = null,
   freshCode = null,
+  webhooks = null,
   notice,
   error,
 }) {
@@ -274,6 +276,7 @@ export function Settings({
           </p>
         )}
       </section>
+      <WebhooksPanel webhooks={webhooks} />
       <section class="panel">
         <h2>Agents</h2>
         <pre>

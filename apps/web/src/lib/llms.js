@@ -46,6 +46,7 @@ Cheapest priced plan: ${money(s.cheapest_usd)} a month. Last sync: ${s.synced_at
 - \`GET ${site}/api/v1/providers/:slug\` — one provider with every offer it sells here.
 - \`GET ${site}/api/v1/deals\` — hosting deals and industry stories.
 - \`GET ${site}/api/v1/me\`, \`/api/v1/keys\`, \`/api/v1/saved\` — the account, its keys, its saved searches.
+- \`${site}/api/v1/webhooks\` — signed webhooks (Standard Webhooks, CloudEvents body) for the account: \`server.listed\` and \`server.price_dropped\` for offers matching a saved search, \`pass.granted\`, \`api_key.created\`, \`api_key.revoked\`. GET/POST, \`/:id\` GET/PATCH/DELETE, \`/:id/test\`, \`/:id/rotate\`, \`/:id/secret\`, \`/deliveries\`. Also \`r4ck webhooks\` and the \`*_webhook\` MCP tools.
 - \`POST ${site}/mcp\` — MCP, stateless Streamable HTTP. Descriptor at /.well-known/openmcp.json.
 
 Kinds: ${KINDS.join(', ')}. Sorts: relevance, price, value (USD per vCPU+GB), ram, vcpu, disk, updated, name.

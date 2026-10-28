@@ -7,6 +7,15 @@ import { accessFor } from '../lib/gate.js';
 import { Denied, notice, render, requireUser, respond, wantsJson } from '../lib/http.js';
 import { profiles } from '../lib/profile.js';
 import * as svc from '../lib/service.js';
+import {
+  EVENT_HELP,
+  EVENT_TYPES,
+  emit,
+  forgetOwner,
+  hooks,
+  keyEvent,
+  WebhookError,
+} from '../lib/webhooks.js';
 import { Settings } from '../views/account.jsx';
 import { Deals } from '../views/deals.jsx';
 import { About, ApiDocs, CliDocs, Pricing } from '../views/docs.jsx';
@@ -21,13 +30,15 @@ import { Compare, Server, Servers } from '../views/servers.jsx';
 export async function settingsPage(c, extra = {}) {
   const user = requireUser(c);
   const admin = user.role === 'admin';
-  const [keys, passkeys, saved, contact, pass, codes] = await Promise.all([
+  const [keys, passkeys, saved, contact, pass, codes, endpoints, deliveries] = await Promise.all([
     auth.listApiKeys(user.id),
     accounts.listPasskeys(user.id),
     svc.listSaved(user),
     profiles.get(user.id),
     credits.passFor(user),
     admin ? credits.services().credits.list() : Promise.resolve(null),
+    hooks().listEndpoints(String(user.id)),
+    hooks().deliveries(String(user.id), { limit: 10 }),
   ]);
   c.header('cache-control', 'private, no-store');
   return c.html(
@@ -42,6 +53,13 @@ export async function settingsPage(c, extra = {}) {
         pass={pass}
         codes={codes ? codes.map((x) => credits.codeOut(x)) : null}
         freshCode={extra.freshCode ?? null}
+        webhooks={{
+          endpoints,
+          deliveries,
+          eventTypes: EVENT_TYPES,
+          help: EVENT_HELP,
+          fresh: extra.freshWebhook ?? null,
+        }}
         {...notice(c)}
       />,
     ),
@@ -162,6 +180,74 @@ export function registerPages(app) {
       notice: 'Contact details saved.',
     });
   });
+  // Webhooks from the settings page, without script. A secret is shown once, on
+  // the page that answers the form, never put in a URL.
+  const hookForm = (fn) => async (c) => {
+    const user = requireUser(c);
+    try {
+      return await fn(c, String(user.id));
+    } catch (err) {
+      if (!(err instanceof WebhookError)) throw err;
+      return respond(c, {
+        redirectTo: '/settings#webhooks',
+        error: err.message,
+        status: err.status,
+      });
+    }
+  };
+  app.post(
+    '/settings/webhooks',
+    hookForm(async (c, owner) => {
+      const body = await c.req.parseBody({ all: true });
+      const picked = [body.events ?? []].flat().map(String).filter(Boolean);
+      const r = await hooks().createEndpoint(owner, {
+        url: String(body.url ?? '').trim(),
+        events: picked.length ? picked : ['*'],
+        description: String(body.description ?? '').slice(0, 200),
+      });
+      return settingsPage(c, { freshWebhook: { url: r.endpoint.url, secret: r.secret } });
+    }),
+  );
+  app.post(
+    '/settings/webhooks/:id/test',
+    hookForm(async (c, owner) => {
+      const r = await hooks().test(owner, c.req.param('id'));
+      return respond(c, {
+        json: r,
+        status: 200,
+        redirectTo: '/settings#webhooks',
+        ...(r.ok
+          ? { notice: `Test delivered (HTTP ${r.status}).` }
+          : { error: `Test failed: ${r.status ? `HTTP ${r.status}` : (r.error ?? 'no answer')}.` }),
+      });
+    }),
+  );
+  app.post(
+    '/settings/webhooks/:id/rotate',
+    hookForm(async (c, owner) => {
+      const e = await hooks().getEndpoint(owner, c.req.param('id'));
+      const r = await hooks().rotateSecret(owner, e.id);
+      return settingsPage(c, { freshWebhook: { url: e.url, secret: r.secret, rotated: true } });
+    }),
+  );
+  app.post(
+    '/settings/webhooks/:id/toggle',
+    hookForm(async (c, owner) => {
+      const e = await hooks().getEndpoint(owner, c.req.param('id'));
+      await hooks().updateEndpoint(owner, e.id, { enabled: !e.enabled });
+      return respond(c, {
+        redirectTo: '/settings#webhooks',
+        notice: e.enabled ? 'Webhook paused.' : 'Webhook switched on.',
+      });
+    }),
+  );
+  app.post(
+    '/settings/webhooks/:id/delete',
+    hookForm(async (c, owner) => {
+      await hooks().deleteEndpoint(owner, c.req.param('id'));
+      return respond(c, { redirectTo: '/settings#webhooks', notice: 'Webhook removed.' });
+    }),
+  );
   app.post('/api/keys', async (c) => {
     const user = requireUser(c);
     const body = await c.req.parseBody();
@@ -169,12 +255,21 @@ export function registerPages(app) {
       userId: user.id,
       name: String(body.name ?? 'default').slice(0, 60),
     });
+    await emit(user.id, 'api_key.created', keyEvent(created, body.name), {
+      subject: `account:${user.id}`,
+    });
     if (wantsJson(c)) return c.json(created, 201);
     return c.redirect(`/settings?key=${encodeURIComponent(created.key)}`, 303);
   });
   app.post('/api/keys/:id/revoke', async (c) => {
     const user = requireUser(c);
     await auth.revokeApiKey({ userId: user.id, id: c.req.param('id') });
+    await emit(
+      user.id,
+      'api_key.revoked',
+      { id: c.req.param('id') },
+      { subject: `account:${user.id}` },
+    );
     return respond(c, { redirectTo: '/settings', notice: 'Key revoked.' });
   });
   app.post('/api/saved', async (c) => {
@@ -198,6 +293,7 @@ export function registerPages(app) {
     const user = requireUser(c);
     const { sql } = await import('@r4ck/db');
     await sql`delete from users where id = ${user.id}`;
+    await forgetOwner(user.id);
     await profiles.remove(user.id);
     c.header('set-cookie', auth.sessionCookie('', { clear: true }));
     return respond(c, { redirectTo: '/', notice: 'Account deleted.' });
