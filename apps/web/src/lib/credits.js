@@ -31,6 +31,7 @@ import { config } from '@r4ck/config';
 import { sql } from '@r4ck/db';
 import * as accounts from '@r4ck/db/accounts';
 import { accountPassToken } from './gate.js';
+import { emit } from './webhooks.js';
 
 export const UNIT = 'pass_days';
 const DAY_MS = 86_400_000;
@@ -42,13 +43,26 @@ export const pgPool = (db = sql) => ({
 
 /** Days of the pass, through the same table a sold pass is written to. */
 export async function grantPass({ userId, days, ref, source }) {
-  return accounts.grantPassDays({
+  const row = await accounts.grantPassDays({
     userId,
     days,
     ref: `grant:${ref}:${userId}`,
     source,
     passMinutes: config.x402.passMinutes,
   });
+  // null = this ref was granted before (idempotent), so nothing new to tell.
+  if (row)
+    await emit(
+      userId,
+      'pass.granted',
+      {
+        days: Number(row.days),
+        source: row.source,
+        until: (await accounts.accountPassUntil(userId))?.toISOString() ?? null,
+      },
+      { subject: `account:${userId}` },
+    );
+  return row;
 }
 
 /** The account's pass: when it runs out and the bearer token for it. */

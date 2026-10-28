@@ -1,6 +1,6 @@
 {
   "name": "@profullstack/r4ck",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "r4ck.dev from the terminal and for agents: search every VPS, bare metal, GPU and PaaS offer for sale, drill down by spec, price and place, and bridge the same tools into any MCP client.",
   "type": "module",
   "main": "src/index.js",

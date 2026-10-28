@@ -26,7 +26,8 @@ export function looksLikeOpenServer(doc) {
   return Boolean(doc.openserver || doc.$schema?.includes?.('openserver') || lists.length);
 }
 
-export function buildDaemon({ log = console.log } = {}) {
+/** `onChanges({ listed, dropped })` hears what each mirror tick listed and cut (the web app's watchers). */
+export function buildDaemon({ log = console.log, onChanges = null } = {}) {
   const daemon = createDaemon({
     name: config.siteName,
     // BullMQ on the site's own Redis (the compose `redis` service): queue, run records and task
@@ -61,6 +62,7 @@ export function buildDaemon({ log = console.log } = {}) {
         log: ctx.log,
         budgetMs: config.nichedb.budgetMs,
         walkEveryMs: config.nichedb.walkHours * 3600_000,
+        onChanges,
       });
     },
   });

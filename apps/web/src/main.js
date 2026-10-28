@@ -3,6 +3,7 @@ import { close as closeDb, healthcheck } from '@r4ck/db';
 import { migrate } from '@r4ck/db/migrate';
 import { buildDaemon } from '@r4ck/sync/daemon';
 import { app } from './app.js';
+import { hooks, notifyWatchers } from './lib/webhooks.js';
 
 /** One process, one container. ROLES decides what runs: web, worker, or both. */
 try {
@@ -15,7 +16,11 @@ if (!(await healthcheck())) throw new Error('database healthcheck failed at boot
 
 // The worker role is the updater daemon (@profullstack/scraper-daemon), see packages/sync/src/daemon.js.
 let daemon = null;
-if (config.roles.includes('worker') && config.nichedb.syncOnBoot) daemon = buildDaemon().start();
+if (config.roles.includes('worker') && config.nichedb.syncOnBoot)
+  daemon = buildDaemon({ onChanges: (changes) => notifyWatchers(changes) }).start();
+
+// Customer webhooks: drain the outbox (SKIP LOCKED, so any number of processes may).
+hooks().start();
 
 let server = null;
 if (config.roles.includes('web')) {
@@ -28,6 +33,7 @@ if (config.roles.includes('web')) {
 async function shutdown(signal) {
   console.log(`[boot] ${signal}, draining`);
   server?.stop(true);
+  hooks().stop();
   await daemon?.stop({ graceMs: 5_000 });
   await closeDb().catch(() => {});
   process.exit(0);

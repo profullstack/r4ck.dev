@@ -8,6 +8,7 @@ import { meterApi, pricing } from '../lib/gate.js';
 import { Denied, requireUser } from '../lib/http.js';
 import { profiles, profileUser } from '../lib/profile.js';
 import * as svc from '../lib/service.js';
+import { emit, keyEvent, webhooksHandler } from '../lib/webhooks.js';
 
 const CORS = {
   'access-control-allow-origin': '*',
@@ -73,6 +74,7 @@ export function registerApi(app) {
         '/api/v1/pass',
         '/api/v1/credits/redeem',
         '/api/v1/invites',
+        '/api/v1/webhooks',
       ],
       kinds: KINDS,
       sorts: SORTS,
@@ -200,6 +202,9 @@ export function registerApi(app) {
       userId: user.id,
       name: String(body.name ?? 'default').slice(0, 60),
     });
+    await emit(user.id, 'api_key.created', keyEvent(created, body.name), {
+      subject: `account:${user.id}`,
+    });
     return c.json(
       {
         key: created.key,
@@ -213,6 +218,12 @@ export function registerApi(app) {
   app.delete('/api/v1/keys/:id', async (c) => {
     const user = requireUser(c);
     await auth.revokeApiKey({ userId: user.id, id: c.req.param('id') });
+    await emit(
+      user.id,
+      'api_key.revoked',
+      { id: c.req.param('id') },
+      { subject: `account:${user.id}` },
+    );
     return c.json({ ok: true });
   });
   app.get('/api/v1/saved', async (c) => c.json(await svc.listSaved(requireUser(c))));
@@ -227,6 +238,17 @@ export function registerApi(app) {
   app.delete('/api/v1/saved/:id', async (c) =>
     c.json(await svc.deleteSaved(requireUser(c), c.req.param('id'))),
   );
+
+  /* ------------------------------------------------------------ webhooks -- */
+  // @profullstack/webhooks' own API, for the account behind the key or session.
+  const webhooks = async (c) => {
+    const user = requireUser(c);
+    return (
+      (await webhooksHandler(String(user.id))(c.req.raw)) ?? c.json({ error: 'Not found' }, 404)
+    );
+  };
+  app.all('/api/v1/webhooks', webhooks);
+  app.all('/api/v1/webhooks/*', webhooks);
 }
 
 const keyOut = (k) => ({
