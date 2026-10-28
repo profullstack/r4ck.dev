@@ -1,5 +1,4 @@
 import { afterAll, describe, expect, test } from 'bun:test';
-import { verifySignature } from '@profullstack/webhooks';
 
 /**
  * Customer webhooks end to end against a real Postgres (DATABASE_URL): the
@@ -19,6 +18,7 @@ if (!url) {
   const auth = await import('@r4ck/auth');
   const { app } = await import('../apps/web/src/app.js');
   const wh = await import('../apps/web/src/lib/webhooks.js');
+  const { verifySignature } = wh;
 
   const EMAIL = 'hooks@webhooks.test.r4ck';
   const PROVIDER = 'whtest';

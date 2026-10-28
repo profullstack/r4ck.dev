@@ -1,4 +1,10 @@
-import { postgresStore, WebhookError, Webhooks, webhooksApi } from '@profullstack/webhooks';
+import {
+  postgresStore,
+  verifySignature,
+  WebhookError,
+  Webhooks,
+  webhooksApi,
+} from '@profullstack/webhooks';
 import { config } from '@r4ck/config';
 import { jsonb, sql } from '@r4ck/db';
 import { search } from '@r4ck/db/search';
@@ -146,4 +152,4 @@ export async function forgetOwner(owner, db = sql) {
   await db`delete from webhook_endpoints where owner = ${String(owner)}`;
 }
 
-export { WebhookError };
+export { verifySignature, WebhookError };
