@@ -32,7 +32,7 @@ describe('/crawl page', () => {
     expect(html.startsWith('<!doctype html>')).toBe(true);
     expect(html).toContain('<title>Crawl pass · r4ck</title>');
     expect(html).toContain('class="topbar"');
-    expect(html).toContain('class="footer"');
+    expect(html).toContain('data-pfs-footer=');
     expect(html).toContain('/styles.css?v=');
     expect(html).toContain('<meta name="robots" content="noindex"');
     expect(html).toContain('Training crawlers pay for access here.');

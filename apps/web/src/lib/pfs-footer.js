@@ -9,9 +9,35 @@
  */
 import { createHash } from 'node:crypto';
 import { footerHtml, footerHtmlSync, subscribeForm } from '@profullstack/footer';
+import { config } from '@r4ck/config';
 import { raw } from 'hono/html';
 
-const options = { site: 'https://r4ck.dev/' };
+const options = {
+  site: 'https://r4ck.dev/',
+  tagline: 'Data under CC BY 4.0; prices estimated using ECB daily rates.',
+  links: [
+    { label: 'Servers', href: '/servers' },
+    { label: 'Providers', href: '/providers' },
+    { label: 'Compare', href: '/compare' },
+    { label: 'Deals', href: '/deals' },
+    { label: 'Pricing', href: '/pricing' },
+    { label: 'API', href: '/docs/api' },
+    { label: 'CLI', href: '/docs/cli' },
+    { label: 'MCP', href: '/docs/mcp' },
+    { label: 'About', href: '/about' },
+    {
+      label: 'Source',
+      href: 'https://github.com/profullstack/r4ck.dev',
+      rel: 'noopener noreferrer',
+    },
+    {
+      label: 'NicheDB hosting data',
+      href: `${config.nichedb.url}/c/hosting`,
+      rel: 'noopener noreferrer',
+    },
+    { label: 'Findhost', href: 'https://www.findhost.app/', rel: 'noopener noreferrer' },
+  ],
+};
 
 /**
  * The CSP source for the footer's inline newsletter script (wireSubscribe, footer 0.4.0+), as
