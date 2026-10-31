@@ -2,7 +2,6 @@ import { config } from '@r4ck/config';
 import { raw } from 'hono/html';
 import { assetUrl } from '../lib/assets.js';
 import { PfsFooter } from '../lib/pfs-footer.js';
-import { PitFooter } from '../lib/pit-footer.js';
 
 /**
  * The one HTML shell. Dark ground by default, a light theme on request,
@@ -157,32 +156,7 @@ export function Layout({
         <main id="main" class={wide ? 'wide' : 'wrap'}>
           {children}
         </main>
-        <footer class="footer">
-          <nav class="footer-links" aria-label="Footer">
-            <a class="brand" href="/">
-              <span class="wordmark">
-                r<em>4</em>ck
-              </span>
-            </a>
-            <a href="/servers">Servers</a>
-            <a href="/providers">Providers</a>
-            <a href="/compare">Compare</a>
-            <a href="/deals">Deals</a>
-            <a href="/pricing">Pricing</a>
-            <a href="/docs/api">API</a>
-            <a href="/docs/cli">CLI</a>
-            <a href="/docs/mcp">MCP</a>
-            <a href="/about">About</a>
-            <a href="https://github.com/profullstack/r4ck.dev">Source</a>
-          </nav>
-          <p class="footer-note muted small">
-            Plan data mirrored from the{' '}
-            <a href={`${config.nichedb.url}/c/hosting`}>NicheDB hosting collection</a>; provider
-            descriptions from <a href="https://www.findhost.app/">findhost.app</a>, CC BY 4.0. USD
-            prices are estimates from daily ECB rates.
-          </p>
-        </footer>
-        {/* Copyright and the Profullstack webring: lib/pfs-footer.js. */}
+        {/* Site links, data attribution, copyright, and the webring use one shared footer. */}
         <PfsFooter />
         <nav class="bottomnav" aria-label="Sections">
           {[
@@ -216,8 +190,6 @@ export function Layout({
         </dialog>
         <script src={vendor} defer></script>
         <script src={js} defer></script>
-        {/* The pit.world global footer, last in <body>: lib/pit-footer.js. */}
-        <PitFooter />
       </body>
     </html>
   );
