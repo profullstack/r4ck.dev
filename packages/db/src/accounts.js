@@ -121,6 +121,43 @@ export async function deletePasskey({ userId, credentialId }) {
   await sql`delete from passkeys where user_id = ${userId} and credential_id = ${credentialId}`;
 }
 
+/* ----------------------------------------------------------- CoinPay OAuth -- */
+
+export async function coinpayIdentityBySub(sub) {
+  const [row] = await sql`
+    select user_id, sub, email, name, openprofile_url, linked_at
+    from coinpay_identities where sub = ${sub}
+  `;
+  return row ?? null;
+}
+
+export async function coinpayIdentityForUser(userId) {
+  const [row] = await sql`
+    select user_id, sub, email, name, openprofile_url, linked_at
+    from coinpay_identities where user_id = ${userId}::uuid
+  `;
+  return row ?? null;
+}
+
+export async function linkCoinpayIdentity({ userId, sub, email, name, openprofileUrl }) {
+  const [row] = await sql`
+    insert into coinpay_identities (user_id, sub, email, name, openprofile_url)
+    values (${userId}::uuid, ${sub}, ${email}, ${name}, ${openprofileUrl})
+    on conflict (user_id) do update set
+      email = excluded.email,
+      name = excluded.name,
+      openprofile_url = excluded.openprofile_url,
+      linked_at = now()
+    where coinpay_identities.sub = excluded.sub
+    returning user_id, sub, email, name, openprofile_url, linked_at
+  `;
+  return row ?? null;
+}
+
+export async function unlinkCoinpayIdentity(userId) {
+  await sql`delete from coinpay_identities where user_id = ${userId}::uuid`;
+}
+
 /** Challenges live in Postgres for five minutes, so no Redis is needed. */
 export async function stashChallenge(challenge) {
   const id = crypto.randomUUID();

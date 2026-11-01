@@ -30,6 +30,11 @@ export const config = Object.freeze({
   port: num(env.PORT, 3000),
   roles: list(env.ROLES ?? 'web,worker'),
   databaseUrl: env.DATABASE_URL ?? (isTest ? 'postgres://r4ck:r4ck@localhost:5442/r4ck' : ''),
+  coinpayOAuth: {
+    clientId: env.COINPAY_OAUTH_CLIENT_ID ?? '',
+    clientSecret: env.COINPAY_OAUTH_CLIENT_SECRET ?? '',
+    redirectUri: `${siteUrl}/auth/coinpay/callback`,
+  },
   adminEmails: list(env.ADMIN_EMAILS).map((e) => e.toLowerCase()),
   session: { cookie: 'r4k_session', ttlDays: num(env.SESSION_TTL_DAYS, 90) },
   api: {

@@ -1,8 +1,16 @@
-import { saveSignupProfile, validateProfile } from '@profullstack/profile';
+import { finishSignIn } from '@profullstack/coinpay-onboard/oauth';
+import { saveOpenProfileContact, saveSignupProfile, validateProfile } from '@profullstack/profile';
 import * as auth from '@r4ck/auth';
 import { config } from '@r4ck/config';
 import * as accounts from '@r4ck/db/accounts';
 import { getCookie, setCookie } from 'hono/cookie';
+import {
+  beginCoinpayLink,
+  COINPAY_STATE_COOKIE,
+  coinpayStateCookieOptions,
+  readCoinpayLink,
+  sameCoinpayState,
+} from '../lib/coinpay.js';
 import { acceptInvite, attributeReferral, looksLikeInvite } from '../lib/credits.js';
 import { callerAddress } from '../lib/gate.js';
 import { render, requireUser, respond } from '../lib/http.js';
@@ -33,6 +41,95 @@ export function registerAuth(app) {
     return c.html(
       await render(<SignIn mode="signup" next={c.req.query('next')} invite={inviteFrom(c)} />),
     );
+  });
+
+  app.get('/auth/coinpay/connect', (c) => {
+    const user = requireUser(c);
+    if (!config.coinpayOAuth.clientId || !config.coinpayOAuth.clientSecret)
+      return c.redirect('/settings?error=coinpay_unconfigured', 303);
+    const { url, cookie } = beginCoinpayLink(user.id);
+    setCookie(c, COINPAY_STATE_COOKIE, cookie, coinpayStateCookieOptions());
+    return c.redirect(url, 302);
+  });
+
+  app.get('/auth/coinpay/callback', async (c) => {
+    const user = c.get('user');
+    const pending = readCoinpayLink(getCookie(c, COINPAY_STATE_COOKIE));
+    setCookie(c, COINPAY_STATE_COOKIE, '', {
+      ...coinpayStateCookieOptions(0),
+      path: '/auth/coinpay',
+    });
+    const fail = (reason) => c.redirect(`/settings?error=coinpay_${reason}`, 303);
+    if (
+      !user ||
+      !pending ||
+      pending.userId !== String(user.id) ||
+      !sameCoinpayState(pending.state, c.req.query('state'))
+    )
+      return fail('state');
+    if (c.req.query('error')) return fail('denied');
+    const code = c.req.query('code');
+    if (!code) return fail('failed');
+
+    let who;
+    try {
+      const result = await finishSignIn({
+        code,
+        verifier: pending.verifier,
+        nonce: pending.nonce,
+        clientId: config.coinpayOAuth.clientId,
+        clientSecret: config.coinpayOAuth.clientSecret,
+        redirectUri: config.coinpayOAuth.redirectUri,
+      });
+      who = {
+        sub: result.sub,
+        email: typeof result.email === 'string' ? result.email : null,
+        name: typeof result.name === 'string' ? result.name : null,
+        openprofileUrl: safeOpenProfileUrl(result.userinfo.openprofile_url),
+      };
+    } catch (error) {
+      console.error('[auth] CoinPay link failed:', error instanceof Error ? error.message : error);
+      return fail('failed');
+    }
+
+    const bySub = await accounts.coinpayIdentityBySub(who.sub);
+    if (bySub && String(bySub.user_id) !== String(user.id)) return fail('already_linked');
+    const byUser = await accounts.coinpayIdentityForUser(user.id);
+    if (byUser && byUser.sub !== who.sub) return fail('other_account');
+    let linked;
+    try {
+      linked = await accounts.linkCoinpayIdentity({
+        userId: user.id,
+        sub: who.sub,
+        email: who.email,
+        name: who.name,
+        openprofileUrl: who.openprofileUrl,
+      });
+    } catch (error) {
+      console.error(
+        '[auth] CoinPay identity save failed:',
+        error instanceof Error ? error.message : error,
+      );
+      return fail('already_linked');
+    }
+    if (!linked) return fail('already_linked');
+    if (who.openprofileUrl) {
+      try {
+        await saveOpenProfileContact(profiles, String(user.id), who.openprofileUrl);
+      } catch (error) {
+        console.warn(
+          '[auth] OpenProfile import skipped:',
+          error instanceof Error ? error.message : error,
+        );
+      }
+    }
+    return c.redirect('/settings?notice=CoinPay%20connected', 303);
+  });
+
+  app.post('/auth/coinpay/disconnect', async (c) => {
+    const user = requireUser(c);
+    await accounts.unlinkCoinpayIdentity(user.id);
+    return c.redirect('/settings?notice=CoinPay%20disconnected', 303);
   });
 
   /** Request a link. The answer is identical whether or not the address exists. */
@@ -198,4 +295,14 @@ export function registerAuth(app) {
     c.header('set-cookie', auth.sessionCookie(result.sessionId));
     return c.json({ ok: true });
   });
+}
+
+function safeOpenProfileUrl(value) {
+  if (typeof value !== 'string') return null;
+  try {
+    const url = new URL(value);
+    return url.protocol === 'https:' ? url.toString() : null;
+  } catch {
+    return null;
+  }
 }

@@ -30,16 +30,18 @@ import { Compare, Server, Servers } from '../views/servers.jsx';
 export async function settingsPage(c, extra = {}) {
   const user = requireUser(c);
   const admin = user.role === 'admin';
-  const [keys, passkeys, saved, contact, pass, codes, endpoints, deliveries] = await Promise.all([
-    auth.listApiKeys(user.id),
-    accounts.listPasskeys(user.id),
-    svc.listSaved(user),
-    profiles.get(user.id),
-    credits.passFor(user),
-    admin ? credits.services().credits.list() : Promise.resolve(null),
-    hooks().listEndpoints(String(user.id)),
-    hooks().deliveries(String(user.id), { limit: 10 }),
-  ]);
+  const [keys, passkeys, saved, contact, pass, codes, endpoints, deliveries, coinpayIdentity] =
+    await Promise.all([
+      auth.listApiKeys(user.id),
+      accounts.listPasskeys(user.id),
+      svc.listSaved(user),
+      profiles.get(user.id),
+      credits.passFor(user),
+      admin ? credits.services().credits.list() : Promise.resolve(null),
+      hooks().listEndpoints(String(user.id)),
+      hooks().deliveries(String(user.id), { limit: 10 }),
+      accounts.coinpayIdentityForUser(user.id),
+    ]);
   c.header('cache-control', 'private, no-store');
   return c.html(
     await render(
@@ -49,6 +51,10 @@ export async function settingsPage(c, extra = {}) {
         passkeys={passkeys}
         saved={saved.saved}
         contact={contact ?? { email: user.email }}
+        coinpayIdentity={coinpayIdentity}
+        coinpayConfigured={Boolean(
+          config.coinpayOAuth.clientId && config.coinpayOAuth.clientSecret,
+        )}
         freshKey={c.req.query('key')}
         pass={pass}
         codes={codes ? codes.map((x) => credits.codeOut(x)) : null}
