@@ -116,6 +116,8 @@ export function Settings({
   passkeys,
   saved,
   contact = null,
+  coinpayIdentity = null,
+  coinpayConfigured = false,
   freshKey,
   pass = null,
   codes = null,
@@ -245,11 +247,53 @@ export function Settings({
           <code>/api/v1/me/profile</code>.
         </p>
         <form method="post" action="/settings/contact" class="stack">
-          {raw(renderProfileFields({ fields: PROFILE_FIELDS, values: contact ?? {} }))}
+          {raw(
+            renderProfileFields({
+              importOpenProfile: true,
+              fields: PROFILE_FIELDS,
+              values: contact ?? {},
+            }),
+          )}
           <button class="button primary small" type="submit">
             Save contact details
           </button>
         </form>
+      </section>
+      <section class="panel" id="coinpay">
+        <h2>CoinPay account</h2>
+        {coinpayIdentity ? (
+          <>
+            <p class="muted small">
+              Connected{coinpayIdentity.name ? ` as ${coinpayIdentity.name}` : ''}.
+              {coinpayIdentity.openprofile_url ? (
+                <>
+                  {' '}
+                  OpenProfile:{' '}
+                  <a href={coinpayIdentity.openprofile_url} rel="noreferrer">
+                    view profile
+                  </a>
+                  .
+                </>
+              ) : null}
+            </p>
+            <form method="post" action="/auth/coinpay/disconnect">
+              <button class="button ghost small" type="submit">
+                Disconnect CoinPay
+              </button>
+            </form>
+          </>
+        ) : coinpayConfigured ? (
+          <>
+            <p class="muted small">
+              Connect CoinPay to import your OpenProfile details into your private contact profile.
+            </p>
+            <a class="button ghost small" href="/auth/coinpay/connect">
+              Connect CoinPay
+            </a>
+          </>
+        ) : (
+          <p class="muted small">CoinPay account linking is not configured on this deployment.</p>
+        )}
       </section>
       <section class="panel">
         <h2>Saved searches</h2>
