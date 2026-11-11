@@ -83,6 +83,25 @@ export function Layout({
         <meta name="twitter:card" content="summary_large_image" />
         {jsonld ? <script type="application/ld+json">{raw(JSON.stringify(jsonld))}</script> : null}
         {head ?? null}
+        {/* WebMCP: the site's tools for an AI agent in the visitor's browser
+            (@profullstack/webmcp). /mcp honours the session cookie, so a
+            signed-in visitor also gets the saved-search and account tools. */}
+        <script
+          type="module"
+          data-webmcp=""
+          src="https://cdn.jsdelivr.net/npm/@profullstack/webmcp@0/src/embed.js"
+          data-mcp="/mcp"
+          data-search-api="/api/v1/search?q={query}&limit={limit}"
+          data-search-description="Search dedicated servers and VPS offers in plain words, e.g. 2 vcpu 4gb under $10 in germany."
+          data-pages={JSON.stringify({
+            servers: '/servers',
+            providers: '/providers',
+            deals: '/deals',
+            compare: '/compare',
+            pricing: '/pricing',
+            api_docs: '/docs/api',
+          })}
+        ></script>
         <script
           data-site="aa98dc15-df01-4c84-a48d-8f5f7ad236f5"
           src="https://crawlproof.com/stats.js"
@@ -100,7 +119,15 @@ export function Layout({
               r<em>4</em>ck
             </span>
           </a>
-          <form class="topsearch" action="/servers" method="get" role="search">
+          <form
+            class="topsearch"
+            action="/servers"
+            method="get"
+            role="search"
+            toolname="browse_servers"
+            tooldescription="Open the server list filtered by a plain-words query, e.g. 2 vcpu 4gb under $10 in germany."
+            toolautosubmit=""
+          >
             <input
               type="search"
               name="q"
