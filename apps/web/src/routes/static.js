@@ -148,6 +148,8 @@ export function registerStatic(app) {
         '/docs/api',
         '/docs/cli',
         '/docs/mcp',
+        '/privacy',
+        '/terms',
       ].map((p) => ({ loc: `${config.siteUrl}${p}` })),
       ...providers.map((p) => ({
         loc: `${config.siteUrl}/providers/${p.slug}`,

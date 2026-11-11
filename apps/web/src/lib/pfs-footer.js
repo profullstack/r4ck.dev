@@ -25,6 +25,8 @@ const options = {
     { label: 'CLI', href: '/docs/cli' },
     { label: 'MCP', href: '/docs/mcp' },
     { label: 'About', href: '/about' },
+    { label: 'Privacy', href: '/privacy' },
+    { label: 'Terms', href: '/terms' },
     {
       label: 'Source',
       href: 'https://github.com/profullstack/r4ck.dev',

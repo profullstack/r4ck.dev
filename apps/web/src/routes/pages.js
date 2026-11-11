@@ -20,6 +20,7 @@ import { Settings } from '../views/account.jsx';
 import { Deals } from '../views/deals.jsx';
 import { About, ApiDocs, CliDocs, Pricing } from '../views/docs.jsx';
 import { Home } from '../views/home.jsx';
+import { Privacy, Terms } from '../views/legal.jsx';
 import { Provider, Providers } from '../views/providers.jsx';
 import { Compare, Server, Servers } from '../views/servers.jsx';
 
@@ -159,6 +160,8 @@ export function registerPages(app) {
   app.get('/about', async (c) =>
     c.html(await render(<About user={c.get('user')} stats={await svc.stats()} />)),
   );
+  app.get('/privacy', async (c) => c.html(await render(<Privacy user={c.get('user')} />)));
+  app.get('/terms', async (c) => c.html(await render(<Terms user={c.get('user')} />)));
   app.get('/docs', (c) => c.redirect('/docs/api', 302));
   app.get('/docs/api', async (c) => c.html(await render(<ApiDocs user={c.get('user')} />)));
   app.get('/docs/cli', async (c) => c.html(await render(<CliDocs user={c.get('user')} />)));
