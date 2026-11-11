@@ -283,6 +283,8 @@ if (!url) {
         '/docs/api',
         '/docs/cli',
         '/docs/mcp',
+        '/privacy',
+        '/terms',
         '/login',
         '/llms.txt',
         '/skill.md',

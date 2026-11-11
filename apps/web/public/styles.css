@@ -1707,3 +1707,25 @@ kbd {
     color: #000;
   }
 }
+
+/* /privacy and /terms: one readable column of prose. */
+.panel.legal {
+  max-width: 46rem;
+  line-height: 1.65;
+}
+.legal h2 {
+  font-size: 1.1rem;
+  margin: 1.6rem 0 0.5rem;
+}
+.legal h2:first-child {
+  margin-top: 0.4rem;
+}
+.legal ul {
+  padding-left: 1.25rem;
+}
+.legal li {
+  margin: 0.4rem 0;
+}
+.legal li a {
+  color: var(--accent-2);
+}
