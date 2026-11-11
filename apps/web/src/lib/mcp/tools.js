@@ -66,7 +66,7 @@ const filterSchema = {
 export const TOOLS = [
   {
     name: 'search_servers',
-    title: 'Search servers for sale',
+    title: 'Search Servers for Sale',
     description:
       'Search every offer by spec, price and place. Returns rows, how the sentence was understood, and facet counts for narrowing. Prices carry the billed amount and an estimated USD per month.',
     schema: { type: 'object', properties: filterSchema },
@@ -74,7 +74,7 @@ export const TOOLS = [
   },
   {
     name: 'cheapest',
-    title: 'Cheapest servers meeting a spec',
+    title: 'Cheapest Servers Meeting a Spec',
     description:
       'The lowest priced rows that meet the given minimums, ranked by estimated monthly USD.',
     schema: { type: 'object', properties: filterSchema },
@@ -82,21 +82,21 @@ export const TOOLS = [
   },
   {
     name: 'parse_query',
-    title: 'Parse a sentence into filters',
+    title: 'Parse Query into Filters',
     description: 'See how a sentence would be read, without running it.',
     schema: { type: 'object', properties: { q: { type: 'string' } }, required: ['q'] },
     run: (args) => svc.parseOnly(String(args.q ?? '')),
   },
   {
     name: 'get_server',
-    title: 'One server offer',
+    title: 'Get Server Offer',
     description: 'One offer by id with its provider, price history and similar offers.',
     schema: { type: 'object', properties: { id: { type: 'integer' } }, required: ['id'] },
     run: (args) => svc.serverDetail(args.id),
   },
   {
     name: 'compare_servers',
-    title: 'Compare servers',
+    title: 'Compare Servers',
     description: 'Up to 20 offers side by side.',
     schema: {
       type: 'object',
@@ -107,14 +107,14 @@ export const TOOLS = [
   },
   {
     name: 'facets',
-    title: 'Facet counts',
+    title: 'Facet Counts',
     description: 'Every facet value with its count, under an optional filter set.',
     schema: { type: 'object', properties: filterSchema },
     run: (args) => svc.facetsOnly(args),
   },
   {
     name: 'list_providers',
-    title: 'Providers',
+    title: 'List Providers',
     description:
       'Hosting providers with their automation (api, cli, terraform, mcp), country, categories and runtimes. Filter with has, country, category, runtime, q.',
     schema: {
@@ -135,28 +135,28 @@ export const TOOLS = [
   },
   {
     name: 'get_provider',
-    title: 'One provider',
+    title: 'Get Provider',
     description: 'A provider by slug or domain, with every offer it sells here.',
     schema: { type: 'object', properties: { slug: { type: 'string' } }, required: ['slug'] },
     run: (args) => svc.provider(String(args.slug ?? '')),
   },
   {
     name: 'deals',
-    title: 'Hosting deals',
+    title: 'Hosting Deals',
     description: 'Current hosting deals and industry stories.',
     schema: { type: 'object', properties: { limit: { type: 'integer' } } },
     run: (args) => svc.deals({ limit: args.limit ?? 50 }),
   },
   {
     name: 'stats',
-    title: 'What is indexed',
+    title: 'Index Stats',
     description: 'Counts of servers, providers, countries, GPU offers and the last sync.',
     schema: { type: 'object', properties: {} },
     run: () => svc.stats(),
   },
   {
     name: 'save_search',
-    title: 'Save a search',
+    title: 'Save Search',
     description: 'Save a filter set under a name on the caller’s account.',
     key: true,
     schema: {
@@ -168,7 +168,7 @@ export const TOOLS = [
   },
   {
     name: 'saved_searches',
-    title: 'Saved searches',
+    title: 'Saved Searches',
     description: 'The caller’s saved searches, each with its URL, curl and CLI form.',
     key: true,
     schema: { type: 'object', properties: {} },
@@ -176,7 +176,7 @@ export const TOOLS = [
   },
   {
     name: 'delete_saved_search',
-    title: 'Delete a saved search',
+    title: 'Delete Saved Search',
     description: 'Remove one saved search by id.',
     key: true,
     schema: { type: 'object', properties: { id: { type: 'string' } }, required: ['id'] },
@@ -184,7 +184,7 @@ export const TOOLS = [
   },
   {
     name: 'redeem_code',
-    title: 'Redeem a credit code',
+    title: 'Redeem Credit Code',
     description:
       'Redeem a credit code (CR-…) on the caller’s account for days of the pass: no hourly allowance and 500 rows a page on every key, the CLI and MCP while it runs.',
     key: true,
@@ -197,7 +197,7 @@ export const TOOLS = [
   },
   {
     name: 'list_invites',
-    title: 'My invites',
+    title: 'My Invites',
     description:
       'The caller’s invites (quota, status of each) and open affiliate link. Invites are scarce and single use.',
     key: true,
@@ -206,7 +206,7 @@ export const TOOLS = [
   },
   {
     name: 'create_invite',
-    title: 'Make an invite',
+    title: 'Create Invite',
     description:
       'Make one invite link from the caller’s quota. The link is returned once; both sides get days of the pass when a new account is made from it.',
     key: true,
@@ -240,7 +240,7 @@ function webhookTools() {
   return [
     {
       name: 'list_webhooks',
-      title: 'Your webhooks',
+      title: 'List Webhooks',
       description:
         'The caller’s webhook endpoints (url, event filters, on/off, failures) and the event types r4ck sends: server.listed and server.price_dropped for offers matching a saved search, pass.granted, api_key.created, api_key.revoked.',
       key: true,
@@ -253,7 +253,7 @@ function webhookTools() {
     },
     {
       name: 'create_webhook',
-      title: 'Add a webhook',
+      title: 'Add Webhook',
       description:
         'Register an https URL to receive the caller’s events as signed POSTs (CloudEvents body, Standard Webhooks headers). Returns the endpoint and its signing secret (whsec_…), shown once.',
       key: true,
@@ -273,7 +273,7 @@ function webhookTools() {
     },
     {
       name: 'update_webhook',
-      title: 'Change a webhook',
+      title: 'Update Webhook',
       description:
         'Change an endpoint’s url, events or description, or switch it on/off (switching on clears its failure count).',
       key: true,
@@ -296,7 +296,7 @@ function webhookTools() {
     },
     {
       name: 'delete_webhook',
-      title: 'Remove a webhook',
+      title: 'Remove Webhook',
       description: 'Delete an endpoint and its delivery log.',
       key: true,
       readOnly: false,
@@ -305,7 +305,7 @@ function webhookTools() {
     },
     {
       name: 'test_webhook',
-      title: 'Send a test delivery',
+      title: 'Send Test Webhook',
       description:
         'Send a signed webhook.test event to the endpoint now and report the HTTP status.',
       key: true,
@@ -315,7 +315,7 @@ function webhookTools() {
     },
     {
       name: 'rotate_webhook_secret',
-      title: 'Replace a webhook’s signing secret',
+      title: 'Rotate Webhook Secret',
       description: 'Mint a new signing secret and return it; the old one stops working at once.',
       key: true,
       readOnly: false,
@@ -324,7 +324,7 @@ function webhookTools() {
     },
     {
       name: 'webhook_deliveries',
-      title: 'Webhook delivery log',
+      title: 'Webhook Delivery Log',
       description:
         'Recent deliveries (status, attempts, last HTTP status or error, payload), for one endpoint or all.',
       key: true,
@@ -363,12 +363,18 @@ export const describe = (t) => ({
   description: t.description,
   inputSchema: t.schema,
   annotations: {
-    readOnlyHint:
-      t.readOnly ??
-      !['save_search', 'delete_saved_search', 'redeem_code', 'create_invite'].includes(t.name),
-    openWorldHint: false,
+    readOnlyHint: readOnlyOf(t),
+    // Deletes, or a secret replaced so the old one stops working: no undo.
+    destructiveHint: DESTRUCTIVE.has(t.name),
+    // test_webhook POSTs to the caller's own URL; everything else stays on r4ck.
+    openWorldHint: t.name === 'test_webhook',
+    ...(readOnlyOf(t) ? { idempotentHint: true } : {}),
   },
 });
+
+const WRITES = ['save_search', 'delete_saved_search', 'redeem_code', 'create_invite'];
+const DESTRUCTIVE = new Set(['delete_saved_search', 'delete_webhook', 'rotate_webhook_secret']);
+const readOnlyOf = (t) => t.readOnly ?? !WRITES.includes(t.name);
 
 export async function runTool(tool, args, ctx) {
   try {
