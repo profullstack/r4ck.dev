@@ -27,6 +27,9 @@ export const OPEN_PATHS = [
   '/pricing',
   '/docs',
   '/docs/',
+  // The legal pages stay readable by every crawler: a connector directory's review bot reads them.
+  '/privacy',
+  '/terms',
   '/.well-known/',
   // An invite link is a person's first visit, often unfurled by a chat app first.
   '/i/',

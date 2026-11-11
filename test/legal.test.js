@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { readFileSync } from 'node:fs';
 import { config } from '@r4ck/config';
+import { gateway, OPEN_PATHS } from '../apps/web/src/lib/gate.js';
 import { render } from '../apps/web/src/lib/http.js';
 import { LEGAL_EFFECTIVE_DATE, Privacy, Terms } from '../apps/web/src/views/legal.jsx';
 
@@ -59,5 +60,16 @@ describe('legal pages', () => {
     );
     expect(staticSrc).toContain("'/privacy',");
     expect(staticSrc).toContain("'/terms',");
+  });
+  test('both stay open to AI crawlers, which the x402 gate otherwise charges', async () => {
+    expect(OPEN_PATHS).toContain('/privacy');
+    expect(OPEN_PATHS).toContain('/terms');
+    const ua = 'Mozilla/5.0 (compatible; ClaudeBot/1.0; +claudebot@anthropic.com)';
+    for (const path of ['/privacy', '/terms']) {
+      const res = await gateway.handle(
+        new Request(`https://r4ck.dev${path}`, { headers: { 'user-agent': ua } }),
+      );
+      expect([path, res]).toEqual([path, null]);
+    }
   });
 });
