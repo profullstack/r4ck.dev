@@ -48,7 +48,7 @@
         "@profullstack/redeem-credits": "0.2.0",
         "@profullstack/throttle": "^0.4.0",
         "@profullstack/webhooks": "0.2.1",
-        "@profullstack/x402-gateway": "^0.13.1",
+        "@profullstack/x402-gateway": "^0.18.1",
         "@r4ck/auth": "workspace:*",
         "@r4ck/config": "workspace:*",
         "@r4ck/core": "workspace:*",
@@ -230,7 +230,7 @@
 
     "@profullstack/webhooks": ["@profullstack/webhooks@0.2.1", "", {}, "sha512-QHeSkpu4O44oJ620qhQqxqFlD3u/OhupmXRnBHw4MGKuDTa0R+Y/727nnF7psSHxxSfnbWfNuVl15z3IXuaZiw=="],
 
-    "@profullstack/x402-gateway": ["@profullstack/x402-gateway@0.13.1", "", { "dependencies": { "@profullstack/keys": "^0.1.0" } }, "sha512-V7liSO0tShZRlp8dancuDuUSF/rqrr5YF3bzLoZy9wn6ixf1RIRPYTepe72s36JOdSVzi3wfuhaZFm9y0RpV4w=="],
+    "@profullstack/x402-gateway": ["@profullstack/x402-gateway@0.18.1", "", { "dependencies": { "@profullstack/keys": "^0.1.0" } }, "sha512-zc2JGLXMX8eCk7Mp4X91E175enOTNcWPZncKf3LXzoGE+XEhHDJHM1LRZkkY3x2pjLYX3AB11Vx/TP3cobSQ/g=="],
 
     "@r4ck/auth": ["@r4ck/auth@workspace:packages/auth"],
 
@@ -879,6 +879,8 @@
     "@electron/windows-sign/fs-extra": ["fs-extra@11.3.1", "", { "dependencies": { "graceful-fs": "^4.2.0", "jsonfile": "^6.0.1", "universalify": "^2.0.0" } }, "sha512-eXvGGwZ5CL17ZSwHWd3bbgk7UUpF6IFHtP57NYYakPvHOs8GDgDe5KJI36jIJzDkJ6eJjuzRA8eBQb6SkKue0g=="],
 
     "@malept/flatpak-bundler/fs-extra": ["fs-extra@9.1.0", "", { "dependencies": { "at-least-node": "^1.0.0", "graceful-fs": "^4.2.0", "jsonfile": "^6.0.1", "universalify": "^2.0.0" } }, "sha512-hcg3ZmepS30/7BSFqRvoo3DOMQu7IjqxO5nCDt+zM9XWjb33Wg7ziNT+Qvqbuc3+gWpzO02JubVyk2G4Zvo1OQ=="],
+
+    "@profullstack/throttle/@profullstack/x402-gateway": ["@profullstack/x402-gateway@0.13.1", "", { "dependencies": { "@profullstack/keys": "^0.1.0" } }, "sha512-V7liSO0tShZRlp8dancuDuUSF/rqrr5YF3bzLoZy9wn6ixf1RIRPYTepe72s36JOdSVzi3wfuhaZFm9y0RpV4w=="],
 
     "@redis/client/cluster-key-slot": ["cluster-key-slot@1.1.2", "", {}, "sha512-RMr0FhtfXemyinomL4hrWcYJxmX6deFdCxpJzhDttxgO1+bcCnkk+9drydLVDmAMG7NE6aN/fl4F7ucU/90gAA=="],
 
