@@ -56,7 +56,12 @@ const filterSchema = {
   },
   tenancy: { type: 'string', enum: ['shared', 'dedicated'] },
   platform: { type: 'string', description: 'Where the row was read: api, whmcs, openserver…' },
-  stock: { type: 'string', enum: ['in_stock', 'out_of_stock', 'unknown'] },
+  stock: {
+    type: 'string',
+    enum: ['in_stock', 'out_of_stock', 'unknown', 'discontinued'],
+    description:
+      'discontinued = the provider no longer lists the plan; hidden unless asked for by name',
+  },
   sort: { type: 'string', enum: SORTS },
   order: { type: 'string', enum: ['asc', 'desc'] },
   limit: { type: 'integer', minimum: 1, maximum: 500 },

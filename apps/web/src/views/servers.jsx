@@ -192,9 +192,11 @@ export function Server({ user, detail }) {
             priceCurrency: s.price.currency,
             url: s.url,
             availability:
-              s.stock === 'out_of_stock'
-                ? 'https://schema.org/OutOfStock'
-                : 'https://schema.org/InStock',
+              s.stock === 'discontinued'
+                ? 'https://schema.org/Discontinued'
+                : s.stock === 'out_of_stock'
+                  ? 'https://schema.org/OutOfStock'
+                  : 'https://schema.org/InStock',
           },
   };
   return (

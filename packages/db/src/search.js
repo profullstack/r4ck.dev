@@ -60,7 +60,7 @@ const where = (n) => sql`
   and (${n.interval === ''} or s.interval = ${n.interval})
   and (${n.tenancy === ''} or s.tenancy = ${n.tenancy})
   and (${n.platform === ''} or s.platform = ${n.platform})
-  and (${n.stock === ''} or s.stock = ${n.stock})
+  and (${n.stock === ''} and (s.stock is distinct from 'discontinued' or ${n.ids.length > 0}) or s.stock = ${n.stock})
 `;
 
 const FROM = sql`from servers s left join providers p on p.slug = s.provider`;

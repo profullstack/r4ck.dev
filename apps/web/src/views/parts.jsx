@@ -155,12 +155,15 @@ export function Spec({ label, value, max, unit = '' }) {
 }
 
 /** One result: a rack unit. */
+/** Stock values that mean "you cannot buy this now". */
+const OUT = new Set(['out_of_stock', 'discontinued']);
+
 export function Unit({ s, checkbox = true }) {
   const gpu = s.compute.gpu;
   return (
-    <article class={`unit ${s.stock === 'out_of_stock' ? 'is-out' : ''}`} data-id={s.id}>
+    <article class={`unit ${OUT.has(s.stock) ? 'is-out' : ''}`} data-id={s.id}>
       <span
-        class={`unit-led ${s.stock === 'in_stock' ? 'on' : s.stock === 'out_of_stock' ? 'off' : ''}`}
+        class={`unit-led ${s.stock === 'in_stock' ? 'on' : OUT.has(s.stock) ? 'off' : ''}`}
         title={`Stock: ${s.stock ?? 'unknown'}`}
       ></span>
       <div class="unit-main">
