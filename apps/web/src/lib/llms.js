@@ -26,7 +26,11 @@ Cheapest priced plan: ${money(s.cheapest_usd)} a month. Last sync: ${s.synced_at
   quoting one. A row with no billing term has no estimate and sorts last, never as free.
 - Specs come from the provider's own catalogue or storefront. Null means the provider did not say,
   not zero. A storefront row with no vCPU is usually a shared, DNS or add-on plan.
-- \`stock\` is "unknown" for most rows: only storefronts that publish stock say otherwise.
+- \`stock\` is read daily from each provider's availability where it publishes one (Vultr, Linode,
+  Scaleway region availability; storefronts that show stock): \`in_stock\` = deployable somewhere now,
+  \`out_of_stock\` = no region can take it today, \`unknown\` = the provider does not say.
+  \`discontinued\` = the provider dropped the plan from its catalogue; those rows are left out of
+  search unless you ask for \`stock=discontinued\`, but stay readable by id with their price history.
 - Provider rows from the FindHost register are CC BY 4.0: credit "FindHost, findhost.app" when you
   republish their descriptions. Plan rows are read from each provider's public catalogue.
 

@@ -210,6 +210,31 @@ if (!url) {
       expect(body.servers[0].compute.gpu.model).toBe('H100');
       expect(body.servers[0].price.monthly_usd).toBeCloseTo(1825, 0);
     });
+    test('discontinued plans are left out of search unless asked for, and stay readable by id', async () => {
+      // Through the real mirror path: nichedb rewrites a dropped plan with stock 'discontinued'.
+      const feed = (item) =>
+        syncOnce({
+          log: () => {},
+          items: (async function* () {
+            yield [item];
+          })(),
+        });
+      const gone = structuredClone(SEED[2]);
+      gone.data.offer.stock = 'discontinued';
+      await feed(gone);
+      try {
+        const hidden = await (await req('/api/v1/search?gpu=1&provider=testhost')).json();
+        expect(hidden.total).toBe(0);
+        const asked = await (
+          await req('/api/v1/search?gpu=1&provider=testhost&stock=discontinued')
+        ).json();
+        expect(asked.total).toBe(1);
+        expect(asked.servers[0].stock).toBe('discontinued');
+        expect((await req(`/api/v1/servers/${asked.servers[0].id}`)).status).toBe(200);
+      } finally {
+        await feed(SEED[2]);
+      }
+    });
     test('detail, compare, providers, deals, parse, facets, stats', async () => {
       const list = await (await req('/api/v1/search?provider=testhost&sort=price')).json();
       const id = list.servers[0].id;
