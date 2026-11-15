@@ -39,7 +39,17 @@ export const KIND_LABELS = {
   'on-prem': 'On-prem',
 };
 
-export const SORTS = ['relevance', 'price', 'value', 'ram', 'vcpu', 'disk', 'updated', 'name'];
+export const SORTS = [
+  'relevance',
+  'price',
+  'value',
+  'ram',
+  'vcpu',
+  'disk',
+  'updated',
+  'new',
+  'name',
+];
 
 /** Half-open buckets [lo, hi). `hi` null is unbounded. */
 export const BUCKETS = {
@@ -133,6 +143,7 @@ export const STRING_PARAMS = [
   'order',
   'gpu',
   'region',
+  'new',
 ];
 export const ALL_PARAMS = [...LIST_PARAMS, ...NUMBER_PARAMS, ...STRING_PARAMS];
 
@@ -174,7 +185,22 @@ export function filtersFrom(input) {
   if (f.sort && !SORTS.includes(f.sort)) delete f.sort;
   if (f.order && !['asc', 'desc'].includes(f.order)) delete f.order;
   if (f.currency) f.currency = f.currency.toUpperCase();
+  if (f.new !== undefined && newHours(f.new) === null) delete f.new;
   return f;
+}
+
+/**
+ * `new=7d` (or `24h`, `2w`, a bare number of days): offers first seen within
+ * that window. Hours, or null when the value is not a window.
+ */
+export function newHours(v) {
+  const m = String(v ?? '')
+    .trim()
+    .toLowerCase()
+    .match(/^(\d+(?:\.\d+)?)\s*(h|d|w)?$/);
+  if (!m) return null;
+  const n = Number(m[1]) * ({ h: 1, d: 24, w: 168 }[m[2] ?? 'd'] ?? 24);
+  return n > 0 && n <= 24 * 366 ? Math.round(n) : null;
 }
 
 /** The canonical query string for a filter set: stable order, nothing empty. */
@@ -260,6 +286,7 @@ export function describeFilters(f, { countryName = (c) => c } = {}) {
   if (f.tenancy) out.push({ param: 'tenancy', label: f.tenancy });
   if (f.platform) out.push({ param: 'platform', label: f.platform });
   if (f.stock) out.push({ param: 'stock', label: f.stock });
+  if (f.new) out.push({ param: 'new', label: `new in ${f.new}` });
   return out;
 }
 
