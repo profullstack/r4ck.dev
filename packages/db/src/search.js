@@ -1,4 +1,4 @@
-import { BUCKETS, KINDS, SORTS } from '@r4ck/core/facets';
+import { BUCKETS, KINDS, newHours, SORTS } from '@r4ck/core/facets';
 import { pgArray, sql } from './index.js';
 
 /**
@@ -33,6 +33,7 @@ const norm = (f = {}) => ({
   tenancy: f.tenancy ? String(f.tenancy).toLowerCase() : '',
   platform: f.platform ? String(f.platform).toLowerCase() : '',
   stock: f.stock ? String(f.stock).toLowerCase() : '',
+  new_hours: newHours(f.new),
   sort: SORTS.includes(f.sort) ? f.sort : f.q ? 'relevance' : 'price',
   order: f.order === 'desc' ? 'desc' : f.order === 'asc' ? 'asc' : null,
 });
@@ -60,10 +61,30 @@ const where = (n) => sql`
   and (${n.interval === ''} or s.interval = ${n.interval})
   and (${n.tenancy === ''} or s.tenancy = ${n.tenancy})
   and (${n.platform === ''} or s.platform = ${n.platform})
+  and (${n.new_hours === null} or s.first_seen_at >= now() - make_interval(hours => ${n.new_hours ?? 0}))
+  and s.dup_rank = 1
   and (${n.stock === ''} and (s.stock is distinct from 'discontinued' or ${n.ids.length > 0}) or s.stock = ${n.stock})
 `;
 
-const FROM = sql`from servers s left join providers p on p.slug = s.provider`;
+/**
+ * One row per offer, whatever the sources did. Two rows of one provider with
+ * the same name, specs, price, billing term and locations are the same offer
+ * read twice (a plan listed by two sources, a stock count that once leaked
+ * into an id): only the best of them is shown, live before discontinued,
+ * most recently synced first. Distinct offers (another location, another
+ * price) differ in the key and stay. `dup_rank` is what the WHERE keeps.
+ */
+export const DEDUPE_KEY = sql`s0.provider, lower(regexp_replace(coalesce(s0.name, ''), '\\s+', ' ', 'g')), s0.vcpu, s0.ram_mb, s0.disk_gb, s0.gpu_model, s0.gpu_count, s0.price, s0.currency, s0.interval, s0.countries`;
+
+const SERVERS = sql`(
+  select s0.*, row_number() over (
+    partition by ${DEDUPE_KEY}
+    order by (s0.stock = 'discontinued') asc nulls first, s0.synced_at desc nulls last, s0.id asc
+  ) as dup_rank
+  from servers s0
+)`;
+
+const FROM = sql`from ${SERVERS} s left join providers p on p.slug = s.provider`;
 
 export const SELECT_ROW = sql`
   s.id, s.nichedb_id, s.external_id, s.provider, s.provider_name, s.name, s.url, s.kind, s.tenancy, s.management,
@@ -79,7 +100,8 @@ export async function search(filters, { limit = 25, offset = 0 } = {}) {
   const lim = Math.min(Math.max(1, Number(limit) || 25), 500);
   const off = Math.min(Math.max(0, Number(offset) || 0), 100_000);
   const desc =
-    n.order === 'desc' || (n.order === null && ['ram', 'vcpu', 'disk', 'updated'].includes(n.sort));
+    n.order === 'desc' ||
+    (n.order === null && ['ram', 'vcpu', 'disk', 'updated', 'new'].includes(n.sort));
   const rows = await sql`
     select ${SELECT_ROW}, count(*) over() as total,
       case when ${n.q !== ''} then ts_rank(s.search, websearch_to_tsquery('simple', ${n.q || 'x'})) else 0 end as rank,
@@ -99,6 +121,7 @@ export async function search(filters, { limit = 25, offset = 0 } = {}) {
       case when ${n.sort === 'disk' && desc} then s.disk_gb end desc nulls last,
       case when ${n.sort === 'disk' && !desc} then s.disk_gb end asc nulls last,
       case when ${n.sort === 'updated'} then s.updated_at end desc nulls last,
+      case when ${n.sort === 'new'} then s.first_seen_at end desc nulls last,
       case when ${n.sort === 'name'} then s.name end asc,
       s.monthly_usd asc nulls last, s.id asc
     limit ${lim} offset ${off}

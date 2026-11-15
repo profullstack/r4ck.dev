@@ -3,6 +3,7 @@ import { countriesFor } from '@r4ck/core/countries';
 import {
   describeFilters,
   filtersFrom,
+  newHours,
   paramsFrom,
   toggle,
   toggleBucket,
@@ -111,5 +112,17 @@ describe('countries', () => {
     expect(countriesFor('uk')).toEqual(['GB']);
     expect(countriesFor('nordics')).toEqual(['SE', 'NO', 'DK', 'FI', 'IS']);
     expect(countriesFor('narnia')).toBeNull();
+  });
+});
+
+describe('new offerings window', () => {
+  test('new=7d, 24h, 2w or a bare number of days; anything else is dropped', () => {
+    expect(newHours('7d')).toBe(168);
+    expect(newHours('24h')).toBe(24);
+    expect(newHours('2w')).toBe(336);
+    expect(newHours('3')).toBe(72);
+    expect(newHours('soon')).toBeNull();
+    expect(filtersFrom('new=7d&sort=new')).toEqual({ new: '7d', sort: 'new' });
+    expect(filtersFrom('new=banana')).toEqual({});
   });
 });

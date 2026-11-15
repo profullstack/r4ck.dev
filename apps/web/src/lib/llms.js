@@ -31,6 +31,11 @@ Cheapest priced plan: ${money(s.cheapest_usd)} a month. Last sync: ${s.synced_at
   \`out_of_stock\` = no region can take it today, \`unknown\` = the provider does not say.
   \`discontinued\` = the provider dropped the plan from its catalogue; those rows are left out of
   search unless you ask for \`stock=discontinued\`, but stay readable by id with their price history.
+- New offerings: \`new=7d\` (or 24h, 2w) keeps offers first seen in that window and \`sort=new\`
+  puts the newest first. Storefront hosts are diffed on every daily read, so a plan a host just
+  added shows up here with its price from the host's own order form.
+- Every result is one offer: the same plan read twice (two sources, an old id) is shown once.
+  The same plan in another location or at another price is a different offer and stays.
 - Provider rows from the FindHost register are CC BY 4.0: credit "FindHost, findhost.app" when you
   republish their descriptions. Plan rows are read from each provider's public catalogue.
 

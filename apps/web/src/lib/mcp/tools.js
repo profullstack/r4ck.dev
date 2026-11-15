@@ -62,6 +62,12 @@ const filterSchema = {
     description:
       'discontinued = the provider no longer lists the plan; hidden unless asked for by name',
   },
+  new: {
+    type: 'string',
+    description:
+      'Only offers first seen within this window: 24h, 7d, 2w (a bare number is days). Pair with sort=new for the newest first.',
+    examples: ['7d'],
+  },
   sort: { type: 'string', enum: SORTS },
   order: { type: 'string', enum: ['asc', 'desc'] },
   limit: { type: 'integer', minimum: 1, maximum: 500 },

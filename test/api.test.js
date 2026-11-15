@@ -235,6 +235,38 @@ if (!url) {
         await feed(SEED[2]);
       }
     });
+    test('the same offer read twice shows once; new=7d keeps offers first seen this week', async () => {
+      // One plan as two nichedb rows (two sources, or an id that once carried a
+      // stock count), plus the same plan in another country, which is a real offer.
+      const dup = (id, country = 'DE') => {
+        const it = structuredClone(SEED[1]);
+        it.id = id;
+        it.first_seen_at = new Date().toISOString();
+        it.data.provider = 'duphost';
+        it.data.providerName = 'DupHost';
+        it.data.offer.location = { countries: [country] };
+        return it;
+      };
+      const rows = [dup(97001), dup(97002), dup(97003, 'US')];
+      await syncOnce({
+        log: () => {},
+        items: (async function* () {
+          yield rows;
+        })(),
+      });
+      try {
+        const all = await (await req('/api/v1/search?provider=duphost')).json();
+        expect(all.total).toBe(2);
+        const fresh = await (await req('/api/v1/search?provider=duphost&new=7d&sort=new')).json();
+        expect(fresh.total).toBe(2);
+        expect(fresh.sort).toBe('new');
+        await sql`update servers set first_seen_at = now() - interval '30 days' where provider = 'duphost'`;
+        const old = await (await req('/api/v1/search?provider=duphost&new=7d')).json();
+        expect(old.total).toBe(0);
+      } finally {
+        await sql`delete from servers where provider = 'duphost'`;
+      }
+    });
     test('detail, compare, providers, deals, parse, facets, stats', async () => {
       const list = await (await req('/api/v1/search?provider=testhost&sort=price')).json();
       const id = list.servers[0].id;
