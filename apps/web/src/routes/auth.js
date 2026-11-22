@@ -1,5 +1,4 @@
 import { finishSignIn } from '@profullstack/coinpay-onboard/oauth';
-import { coinpayFetch } from '../lib/coinpay-ua.js';
 import { saveOpenProfileContact, saveSignupProfile, validateProfile } from '@profullstack/profile';
 import * as auth from '@r4ck/auth';
 import { config } from '@r4ck/config';
@@ -12,6 +11,7 @@ import {
   readCoinpayLink,
   sameCoinpayState,
 } from '../lib/coinpay.js';
+import { coinpayFetch } from '../lib/coinpay-ua.js';
 import { acceptInvite, attributeReferral, looksLikeInvite } from '../lib/credits.js';
 import { callerAddress } from '../lib/gate.js';
 import { render, requireUser, respond } from '../lib/http.js';
