@@ -11,6 +11,7 @@ import {
   readCoinpayLink,
   sameCoinpayState,
 } from '../lib/coinpay.js';
+import { coinpayFetch } from '../lib/coinpay-ua.js';
 import { acceptInvite, attributeReferral, looksLikeInvite } from '../lib/credits.js';
 import { callerAddress } from '../lib/gate.js';
 import { render, requireUser, respond } from '../lib/http.js';
@@ -80,6 +81,7 @@ export function registerAuth(app) {
         clientId: config.coinpayOAuth.clientId,
         clientSecret: config.coinpayOAuth.clientSecret,
         redirectUri: config.coinpayOAuth.redirectUri,
+        fetch: coinpayFetch,
       });
       who = {
         sub: result.sub,
