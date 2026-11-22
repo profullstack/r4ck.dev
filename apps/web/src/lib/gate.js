@@ -53,7 +53,10 @@ export const gateway = createGateway({
     'Bulk CSV and JSON export of any query',
     'Every field on every row',
   ],
-  exempt: (request) => (request.headers.get('cookie') ?? '').includes(`${config.session.cookie}=`),
+  // A session cookie that is merely present is a hint, never a pass (x402-gateway
+  // 0.18.3): it spares a signed-in reader's odd browser string, but GPTBot with a
+  // made-up cookie is still charged. It used to be `exempt`, which let it read free.
+  sessionCookie: config.session.cookie,
   onSale: (sale) =>
     accounts.recordCrawlSale(sale).catch((err) => console.error('[x402] sale not recorded', err)),
 });
