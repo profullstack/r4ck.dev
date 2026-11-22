@@ -10,10 +10,16 @@ beforeAll(async () => {
   ({ gateway } = await import('../apps/web/src/lib/gate.js'));
 });
 
-const GPTBOT = 'Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; GPTBot/1.2; +https://openai.com/gptbot)';
+const GPTBOT =
+  'Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; GPTBot/1.2; +https://openai.com/gptbot)';
 const page = (cookie) =>
   new Request('https://r4ck.dev/servers', {
-    headers: { 'user-agent': GPTBOT, accept: 'application/json', 'x-real-ip': '198.51.100.32', ...(cookie ? { cookie } : {}) },
+    headers: {
+      'user-agent': GPTBOT,
+      accept: 'application/json',
+      'x-real-ip': '198.51.100.32',
+      ...(cookie ? { cookie } : {}),
+    },
   });
 
 test('a declared crawler is offered a crawl pass', async () => {
