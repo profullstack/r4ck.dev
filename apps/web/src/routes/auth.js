@@ -1,4 +1,5 @@
 import { finishSignIn } from '@profullstack/coinpay-onboard/oauth';
+import { coinpayFetch } from '../lib/coinpay-ua.js';
 import { saveOpenProfileContact, saveSignupProfile, validateProfile } from '@profullstack/profile';
 import * as auth from '@r4ck/auth';
 import { config } from '@r4ck/config';
@@ -80,6 +81,7 @@ export function registerAuth(app) {
         clientId: config.coinpayOAuth.clientId,
         clientSecret: config.coinpayOAuth.clientSecret,
         redirectUri: config.coinpayOAuth.redirectUri,
+        fetch: coinpayFetch,
       });
       who = {
         sub: result.sub,
