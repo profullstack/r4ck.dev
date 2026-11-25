@@ -19,7 +19,7 @@ app.use('*', async (c, next) => {
   if (!c.req.path.startsWith('/api/') && c.req.path !== '/mcp')
     c.header(
       'content-security-policy',
-      `default-src 'self'; img-src 'self' https: data:; style-src 'self' 'unsafe-inline'; script-src 'self' https://crawlproof.com https://cdn.jsdelivr.net ${FOOTER_SCRIPT_SRC}; font-src 'self'; connect-src 'self' https://crawlproof.com https://pit.world; frame-src https://crawlproof.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self' https://pit.world`,
+      `default-src 'self'; img-src 'self' https: data:; style-src 'self' 'unsafe-inline' https://real.clicks.pit.world; script-src 'self' https://crawlproof.com https://cdn.jsdelivr.net https://real.clicks.pit.world ${FOOTER_SCRIPT_SRC}; font-src 'self'; connect-src 'self' https://crawlproof.com https://pit.world https://real.clicks.pit.world; frame-src https://crawlproof.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self' https://pit.world`,
     );
   await next();
 });

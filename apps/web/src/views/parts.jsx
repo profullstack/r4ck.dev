@@ -491,3 +491,25 @@ export function Pager({ page, limit, total, params, base = '/servers' }) {
 
 export const Json = ({ data }) => raw(JSON.stringify(data));
 export const site = config.siteUrl;
+
+/**
+ * The real.clicks quote form (real.clicks.pit.world, our own lead pilot). The widget fetches the
+ * one vendor a request goes to and shows a consent line naming it; nothing is sent until the
+ * reader types a request and confirms their email with a code. Allowed by the CSP in app.js.
+ */
+export const REAL_CLICKS = 'https://real.clicks.pit.world';
+export function QuoteForm({ title = 'Want a quote instead of comparing?' }) {
+  return (
+    <section class="section quote-form">
+      <div class="section-head">
+        <h2>{title}</h2>
+      </div>
+      <p class="muted small">
+        Tell one vendor what you need and they reply with a price. Free for you; the vendor pays us
+        for verified requests.
+      </p>
+      <div data-real-clicks data-niche="gpu" data-title="Get a GPU or server quote"></div>
+      <script src={`${REAL_CLICKS}/w.js`} defer></script>
+    </section>
+  );
+}
