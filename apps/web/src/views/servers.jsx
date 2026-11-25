@@ -12,6 +12,7 @@ import {
   Outbound,
   Pager,
   Price,
+  QuoteForm,
   Sparkline,
   Unit,
   withAds,
@@ -123,6 +124,7 @@ export function Servers({ user, result, page, params }) {
           <AgentPanel agent={agent} />
         </section>
       </div>
+      <QuoteForm />
     </Layout>
   );
 }
@@ -309,6 +311,7 @@ export function Server({ user, detail }) {
           </div>
         </section>
       ) : null}
+      <QuoteForm title="Need this, or something close? Get a quote" />
       <AgentPanel agent={agent} title="This offer as data" />
     </Layout>
   );

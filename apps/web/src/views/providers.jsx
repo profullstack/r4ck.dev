@@ -8,6 +8,7 @@ import {
   initials,
   Outbound,
   ProviderCard,
+  QuoteForm,
   Unit,
   withAds,
 } from './parts.jsx';
@@ -340,6 +341,7 @@ export function Provider({ user, detail }) {
           </div>
         )}
       </section>
+      <QuoteForm title="Want quotes for a GPU or server build?" />
       <AgentPanel agent={agent} title="This provider as data" />
     </Layout>
   );
